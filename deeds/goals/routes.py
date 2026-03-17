@@ -54,7 +54,8 @@ def dashboard():
 @login_required
 def weeklyplanner():
     goals_list = Goal.query.filter_by(user_id=current_user.id).all()
-    return render_template("weeklyplanner.html", goals=goals_list)
+    selected_goal_id = request.args.get("goal_id", type=int)
+    return render_template("weeklyplanner.html", goals=goals_list, selected_goal_id=selected_goal_id)
 
 
 @goals.route('/milestones')

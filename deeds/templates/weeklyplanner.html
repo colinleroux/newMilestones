@@ -136,6 +136,7 @@ function plannerApp() {
     days: [],
     goals: [],
     completedGoals: [],
+    initialGoalId: {{ selected_goal_id | tojson }},
     selectedGoalId: null,
     selectedGoal: null,
     weekOffset: 0,
@@ -152,6 +153,13 @@ function plannerApp() {
       this.days = this.getVisibleDates();
       this.resetDayBuckets();
       await this.fetchGoals();
+
+      if (this.initialGoalId !== null) {
+        const initialGoal = this.goals.find(goal => goal.id === this.initialGoalId);
+        if (initialGoal) {
+          await this.selectGoal(initialGoal);
+        }
+      }
     },
 
     toggleGoal(goal) {
