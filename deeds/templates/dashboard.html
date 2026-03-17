@@ -70,10 +70,10 @@
       <div class="mb-3 p-3 rounded-lg shadow border border-gray-200">
         <div class="flex justify-between items-center ">
           <div class="flex space-x-2">
-            <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changeWeek(-1)">Prev</button>
+            <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(-1)">Prev</button>
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
             <button class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded" @click="showCurrentMonth">This Month</button>
-            <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changeWeek(1)">Next</button>
+            <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(1)">Next</button>
           </div>
 
           <div class="flex space-x-3">
@@ -151,6 +151,7 @@ function dashboard() {
     weeklyPlan: {},
     loading: true,
     weekOffset: 0,
+    monthOffset: 0,
     viewMode: 'week',
     selectedGoalId: null,
     goals: {{ goals | tojson }},
@@ -159,8 +160,20 @@ function dashboard() {
       this.generateDays();
       this.fetchSteps();
     },
+
+    changePeriod(offset) {
+      if (this.viewMode === 'month') {
+        this.monthOffset += offset;
+      } else {
+        this.weekOffset += offset;
+      }
+      this.generateDays();
+      this.fetchSteps();
+    },
+
     changeWeek(offset) {
       this.viewMode = 'week';
+      this.monthOffset = 0;
       if (offset === 0) {
         this.weekOffset = 0;
       } else {
@@ -172,6 +185,7 @@ function dashboard() {
 
     showCurrentMonth() {
       this.viewMode = 'month';
+      this.monthOffset = 0;
       this.generateDays();
       this.fetchSteps();
     },
@@ -209,14 +223,12 @@ function dashboard() {
     generateDays() {
       const today = new Date();
       if (this.viewMode === 'month') {
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
+        const firstDay = new Date(today.getFullYear(), today.getMonth() + this.monthOffset, 1);
+        const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0);
         const numberOfDays = lastDay.getDate();
 
         this.days = Array.from({ length: numberOfDays }, (_, i) => {
-          const date = new Date(year, month, i + 1);
+          const date = new Date(firstDay.getFullYear(), firstDay.getMonth(), i + 1);
           const name = date.toISOString().split('T')[0];
           return {
             label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
