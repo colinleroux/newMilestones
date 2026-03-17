@@ -327,7 +327,16 @@ function dashboard() {
 
     formatDate(dateStr) {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
-      return new Date(dateStr).toLocaleDateString(undefined, options);
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString(undefined, options);
+    },
+
+    formatMonthYear(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric'
+      });
     },
 
     get periodLabel() {
@@ -336,10 +345,7 @@ function dashboard() {
       }
 
       if (this.viewMode === 'month') {
-        return new Date(this.days[0].name).toLocaleDateString(undefined, {
-          month: 'long',
-          year: 'numeric'
-        });
+        return this.formatMonthYear(this.days[0].name);
       }
 
       return `Week of ${this.formatDate(this.days[0].name)}`;
