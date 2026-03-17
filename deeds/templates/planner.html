@@ -2,29 +2,21 @@
 {% block content %}
 <div class="max-w-5xl mx-auto text-center">
   <h1 class="text-3xl font-bold text-teal-800 mb-6">Planner Hub</h1>
-  <p class="text-gray-600 mb-10">Manage your goals, milestones, and steps with clarity and focus.</p>
-  <p>Goals can either have milstones or not - its upto you - simple goals just need steps but more complex goals do well to be broken down with milestones</p>
+  <p class="text-gray-600 mb-10">Manage your goals and schedule the steps that move each one forward.</p>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- Manage Goals -->
     <a href="{{ url_for('goals.goal_planner') }}"
        class="block p-8 rounded-lg shadow-lg border border-gray-200 transition transform hover:scale-105 text-center hover:bg-red-300 hover:text-white font-semibold text-lg">
       <h2 class="text-2xl font-bold mb-2">Manage Goals</h2>
-      <p class="text-gray-600 group-hover:text-white">Create, edit and organize your goals.</p>
-    </a>
-
-    <!-- Manage Milestones -->
-    <a href="{{ url_for('goals.milestone_view') }}"
-       class="block p-8 rounded-lg shadow-lg border border-gray-200 transition transform hover:scale-105 text-center hover:bg-blue-300 hover:text-white font-semibold text-lg">
-      <h2 class="text-2xl font-bold mb-2">Manage Milestones</h2>
-      <p class="text-gray-600 group-hover:text-white">Break goals into meaningful milestones.</p>
+      <p class="text-gray-600 group-hover:text-white">Create, edit, and archive your goals.</p>
     </a>
 
     <!-- Add Steps -->
-    <a href="#"
+    <a href="{{ url_for('goals.weeklyplanner') }}"
        class="block p-8 rounded-lg shadow-lg border border-gray-200 transition transform hover:scale-105 text-center hover:bg-orange-300 hover:text-white font-semibold text-lg">
-      <h2 class="text-2xl font-bold mb-2">Add Steps</h2>
-      <p class="text-gray-600 group-hover:text-white">Define daily actions to move forward.</p>
+      <h2 class="text-2xl font-bold mb-2">Plan Steps</h2>
+      <p class="text-gray-600 group-hover:text-white">Schedule and complete the steps attached to each goal.</p>
     </a>
   </div>
 </div>

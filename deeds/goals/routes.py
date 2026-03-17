@@ -51,29 +51,7 @@ def weeklyplanner():
 @goals.route('/milestones')
 @login_required
 def milestone_view():
-    goals_with_milestones = Goal.query.filter_by(user_id=current_user.id).all()
-    goal_data = []
-
-    for goal in goals_with_milestones:
-        milestones = [{
-            'id': m.id,
-            'name': m.name,
-            'deadline': m.deadline.strftime('%Y-%m-%d') if m.deadline else None,
-            'achieved': m.achieved,
-            'percentage': m.percentage,
-            'color': m.color,
-            'created_at': m.created_at.strftime('%Y-%m-%d %H:%M:%S') if m.created_at else None,
-            'description': m.description
-        } for m in goal.milestones]
-
-        goal_data.append({
-            'id': goal.id,
-            'name': goal.name,
-            'color': goal.color,
-            'milestones': milestones
-        })
-
-    return render_template('milestones.html', goal_data=goal_data)
+    return redirect(url_for('goals.goal_planner'))
 
 
 @goals.route('/planner')
