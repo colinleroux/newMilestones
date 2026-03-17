@@ -31,16 +31,6 @@
           </div>
           <div class="text-sm text-blue-500" x-text="goal.expanded ? '-' : '+'"></div>
         </div>
-
-        <div x-show="goal.expanded" class="mt-2 pl-4 space-y-1">
-          <button
-            @click="selectGoal(goal)"
-            class="cursor-pointer p-2 rounded hover:bg-gray-100 border text-left w-full"
-            :class="{ 'bg-blue-100': selectedGoal?.id === goal.id }"
-          >
-            Plan steps for this goal
-          </button>
-        </div>
       </div>
     </template>
   </div>
@@ -165,12 +155,22 @@ function plannerApp() {
     },
 
     toggleGoal(goal) {
-      goal.expanded = !goal.expanded;
-      if (!goal.expanded && this.selectedGoal?.id === goal.id) {
+      const isCurrentlySelected = this.selectedGoal?.id === goal.id;
+
+      this.goals.forEach(existingGoal => {
+        existingGoal.expanded = false;
+      });
+
+      if (isCurrentlySelected) {
+        goal.expanded = false;
         this.selectedGoal = null;
         this.selectedGoalId = null;
         this.resetDayBuckets();
+        return;
       }
+
+      goal.expanded = true;
+      this.selectGoal(goal);
     },
 
     async selectGoal(goal) {
