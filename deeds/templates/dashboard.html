@@ -249,7 +249,7 @@ function dashboard() {
     fetchSteps() {
       this.loading = true;
       const startDate = this.days[0]?.name;
-      const endDate = this.days[6]?.name;
+      const endDate = this.days[this.days.length - 1]?.name;
       const goalParam = this.selectedGoalId ? `&goal_id=${this.selectedGoalId}` : "";
 
       fetch(`/api/steps/range?start=${startDate}&end=${endDate}${goalParam}`)
