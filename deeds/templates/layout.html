@@ -18,16 +18,16 @@
         <title>Mighty Little Deeds</title>
     {% endif %}
 </head>
-<body>
-  <nav x-data="{ isOpen: false }" class="relative bg-white shadow dark:bg-gray-800">
-    <div class="container px-6 py-4 mx-auto flex justify-between items-center">
+<body class="bg-slate-50 text-slate-800">
+  <nav x-data="{ isOpen: false }" class="relative z-50 bg-white shadow-sm">
+    <div class="container mx-auto flex items-center justify-between px-6 py-4">
         <div>
-            <a class="text-2xl lg:text-3xl font-bold text-orange-600 font-redhat transition-colors duration-300 transform dark:text-white hover:text-gray-700 dark:hover:text-gray-300" href="/">
+            <a class="text-2xl font-bold text-slate-800 transition-colors duration-300 hover:text-slate-600 lg:text-3xl" href="/">
     Mighty little deeds
 </a>
         </div>
 
-        <div class="hidden md:flex space-x-8 text-orange-600">
+        <div class="hidden items-center space-x-8 md:flex">
             <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
             <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
             <a class="nav-link" href="{{ url_for('goals.dashboard') }}">Dashboard</a>
@@ -36,14 +36,14 @@
 
             {% if current_user.is_authenticated %}
                 <a class="nav-link" href="{{ url_for('users.account') }}">Account</a>
-                <a class="nav-link text-state-600 dark:text-orange-100" href="{{ url_for('users.logout') }}">Logout</a>
+                <a class="nav-link" href="{{ url_for('users.logout') }}">Logout</a>
             {% else %}
-                <a class="nav-link text-state-600" href="{{ url_for('users.login') }}">Login</a>
+                <a class="nav-link" href="{{ url_for('users.login') }}">Login</a>
             {% endif %}
         </div>
 
         <div class="md:hidden">
-            <button x-cloak @click="isOpen = !isOpen" type="button" class="text-state-600 dark:text-gray-200 hover:text-gray-600 dark:hover:text-gray-400 focus:outline-none" aria-label="toggle menu">
+            <button x-cloak @click="isOpen = !isOpen" type="button" class="rounded-full p-2 text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none" aria-label="toggle menu">
                 <svg x-show="!isOpen" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
                 </svg>
@@ -54,15 +54,17 @@
         </div>
     </div>
 
-    <div x-cloak x-show="isOpen" class="md:hidden absolute inset-x-0 bg-white dark:bg-gray-800 text-state-600">
-        <div class="flex flex-col items-center py-4 space-y-4">
+    <div x-cloak x-show="isOpen" x-transition.origin.top class="absolute inset-x-4 top-full z-50 mt-3 rounded-2xl border border-slate-200 bg-white shadow-xl md:hidden">
+        <div class="flex flex-col px-4 py-4 text-slate-700">
             <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
             <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
+            <a class="nav-link" href="{{ url_for('goals.dashboard') }}">Dashboard</a>
             <a class="nav-link" href="{{ url_for('posts.posts_page') }}">Blog</a>
+            <a class="nav-link" href="#">Contact</a>
 
             {% if current_user.is_authenticated %}
                 <a class="nav-link" href="{{ url_for('users.account') }}">Account</a>
-                <a class="nav-link text-red-600 dark:text-red-400" href="{{ url_for('users.logout') }}">Logout</a>
+                <a class="nav-link text-red-600" href="{{ url_for('users.logout') }}">Logout</a>
             {% else %}
                 <a class="nav-link" href="{{ url_for('users.login') }}">Login</a>
             {% endif %}
@@ -71,12 +73,13 @@
 </nav>
 
 <style>
+    [x-cloak] { display: none !important; }
     .nav-link {
-        @apply my-2 text-state-600 transition-colors duration-300 transform dark:text-gray-200 hover:text-gray-500 dark:hover:text-gray-500 lg:mx-4 lg:my-0;
+        @apply my-2 rounded-lg px-3 py-2 text-slate-700 transition-colors duration-300 hover:bg-slate-100 hover:text-slate-900 lg:mx-1 lg:my-0;
     }
 </style>
 
-    <main class="container mx-auto mt-6 px-6">
+    <main class="container mx-auto mt-6 px-4 sm:px-6">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="w-full">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -110,15 +113,15 @@
 
         </div>
     </main>
-    <footer class="bg-white dark:bg-gray-900">
+    <footer class="bg-white">
         <div class="container px-6 py-8 mx-auto">
             <div class="text-center">
               <hr class="my-6 border-gray-200 md:my-10 dark:border-gray-700" />
 
                 <div class="flex flex-wrap justify-center mt-5 -mx-4">
-                    <a href="{{ url_for('main.home') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 dark:hover:text-blue-400" aria-label="Home"> Home </a>
-                    <a href="{{ url_for('main.about') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="About"> About </a>
-                    <a href="{{ url_for('posts.posts_page') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="Blog"> Blog </a>
+                    <a href="{{ url_for('main.home') }}" class="mx-4 text-slate-600 transition-colors duration-300 hover:text-slate-900" aria-label="Home"> Home </a>
+                    <a href="{{ url_for('main.about') }}" class="mx-4 text-slate-600 transition-colors duration-300 hover:text-slate-900" aria-label="About"> About </a>
+                    <a href="{{ url_for('posts.posts_page') }}" class="mx-4 text-slate-600 transition-colors duration-300 hover:text-slate-900" aria-label="Blog"> Blog </a>
                 </div>
 
             </div>
@@ -126,7 +129,7 @@
             <hr class="my-6 border-gray-200 md:my-10 dark:border-gray-700" />
 
             <div class="flex flex-col items-center sm:flex-row sm:justify-between">
-                <p class="text-gray-500 text-xs dark:text-gray-300">Copyright 2025. All Rights Reserved.</p>
+                <p class="text-xs text-gray-500">Copyright 2025. All Rights Reserved.</p>
             </div>
         </div>
       </footer>

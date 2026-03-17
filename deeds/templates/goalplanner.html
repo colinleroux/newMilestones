@@ -8,8 +8,8 @@
     Dashboard
   </a>
 </div>
-<div x-data="goalPage()" class="flex h-screen">
-  <div class="w-1/4 bg-gray-100 p-4 border-r overflow-y-auto">
+<div x-data="goalPage()" class="flex flex-col gap-6 lg:h-screen lg:flex-row">
+  <div class="w-full rounded-2xl border border-slate-200 bg-gray-100 p-4 lg:w-1/3 lg:overflow-y-auto xl:w-1/4">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-lg font-bold">Your Goals</h2>
       <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-lg" @click="startAddGoal" title="Add Goal">+</button>
@@ -51,15 +51,15 @@
     </template>
   </div>
 
-  <div class="w-3/4 p-6 overflow-y-auto">
+  <div class="w-full rounded-2xl bg-white p-4 shadow-sm lg:w-2/3 lg:overflow-y-auto lg:p-6 xl:w-3/4">
     <template x-if="selectedGoal">
       <div>
-        <div class="flex justify-between items-center mb-4">
+        <div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-4 h-10 rounded-l" :style="`background-color: ${selectedGoal.color}`"></div>
             <h2 class="text-2xl font-bold" x-text="selectedGoal.name"></h2>
           </div>
-          <div class="space-x-2">
+          <div class="flex flex-wrap gap-2">
             <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" @click="editGoal(selectedGoal)">Edit Goal</button>
             <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded" @click="deleteGoal(selectedGoal)">Delete Goal</button>
             <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" @click="startAddGoal">New Goal</button>
@@ -133,7 +133,7 @@
     </template>
 
     <template x-if="!selectedGoal && !addingGoal">
-      <div class="text-gray-500 italic text-center mt-20">&lt;-- Select the goal you wish to edit</div>
+      <div class="mt-12 text-center italic text-gray-500 lg:mt-20">Select the goal you wish to edit.</div>
     </template>
 
     <template x-if="!selectedGoal && addingGoal">
