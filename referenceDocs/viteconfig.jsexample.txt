@@ -1,0 +1,13 @@
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  build: {
+    manifest: 'manifest.json',
+    outDir: 'app/static/vite',       // <-- important
+    assetsDir: 'assets',
+    rollupOptions: {
+      input: 'src/main.js',          // matches your manifest key
+    },
+    emptyOutDir: true,
+  },
+})

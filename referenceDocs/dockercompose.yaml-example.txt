@@ -1,0 +1,43 @@
+services:
+  web:
+    build:
+      context: .
+      target: backend
+    container_name: deeds
+    expose:
+      - "8000"
+    restart: always
+    volumes:
+      # Persist DB on host: ./instance/site.db -> /app/site.db in container
+      - ./instance:/app/instance
+      # Persist and share recipe images (see next section)
+      - ./app/static/profile_pics:/app/app/static/profile_pics
+      - ./app/static/post_images:/app/app/static/post_images
+  nginx:
+    build:
+      context: .
+      target: nginx
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    restart: always
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./app/static/profile_pics:/app/static/profile_pics
+      - ./app/static/post_images:/app/static/post_images
+      # Certbot-related volumes (shared with certbot container)
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    # Renewal loop – runs twice a day
+    entrypoint: /bin/sh
+    command: -c 'while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done'

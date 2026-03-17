@@ -1,0 +1,13 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./app/templates/**/*.html"],
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Red Hat Display"', 'ui-sans-serif', 'system-ui'],
+        sans: ['"Red Hat Display"', 'ui-sans-serif', 'system-ui'], // override default
+      },
+    },
+  },
+  plugins: [],
+}

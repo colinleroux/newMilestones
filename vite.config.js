@@ -2,10 +2,20 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     build: {
-        outDir: 'deeds/viteassets', // Output directory for compiled assets
-        assetsDir: '',         // Place all assets directly inside 'dist'
+        outDir: 'deeds/viteassets',
+        assetsDir: '',
         rollupOptions: {
-            input: 'src/main.js', // Correct path to main.js
+            input: 'src/main.js',
+            output: {
+                entryFileNames: 'main.js',
+                chunkFileNames: '[name].js',
+                assetFileNames: (assetInfo) => {
+                    if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+                        return 'main.css';
+                    }
+                    return '[name][extname]';
+                },
+            },
         },
     },
 });

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+{% set main_js = asset_url('main.js') %}
+{% set csses = asset_css_urls('main.js') %}
+
+<!-- vite keys={{ asset_manifest_keys()|join(' | ') }} -->
+<!-- vite js={{ main_js }} css={{ csses|join(', ') }} -->
+
+{% for css in csses %}
+  <link rel="stylesheet" href="{{ css }}">
+{% endfor %}
+<script type="module" src="{{ main_js }}"></script> {% if title %}
+        <title>Deeds - {{ title }}</title>
+    {% else %}
+        <title>Deeds</title>
+    {% endif %}
+</head>

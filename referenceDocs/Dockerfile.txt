@@ -1,0 +1,41 @@
+# ---- Stage 1: Frontend ----
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+COPY vite.config.js postcss.config.js tailwind.config.js ./
+COPY src ./src
+COPY app/templates ./app/templates
+# (optional) include if used by tailwind/vite
+# COPY style.css ./
+# COPY public ./public
+RUN npm run build
+
+# ---- Stage 2: Python runtime ----
+FROM python:3.11-slim AS backend
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app /app/app
+COPY instance /app/instance
+COPY wsgi_app.py /app/wsgi_app.py
+
+# Bring in the built assets + manifest from frontend stage
+COPY --from=frontend /app/app/static/vite /app/app/static/vite
+
+EXPOSE 8000
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "wsgi_app:application", "--workers", "2", "--threads", "8", "--timeout", "60"]
+
+# ---- Stage 3: Nginx (static + reverse proxy) ----
+FROM nginx:alpine AS nginx
+# Copy your nginx server config (adjust path if your file lives elsewhere)
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# Copy built static files from the backend stage (already contains vite assets)
+COPY --from=backend /app/app/static /app/static
+
+# (optional) healthcheck; requires curl
+# RUN apk add --no-cache curl
+# HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+#   CMD curl -fsS http://localhost/ || exit 1
