@@ -278,12 +278,17 @@ def delete_step(step_id):
 def get_steps_in_range():
     start = request.args.get('start')
     end = request.args.get('end')
+    goal_id = request.args.get('goal_id', type=int)
     if not start or not end:
         return jsonify({'error': 'Missing start or end date'}), 400
 
-    steps = Step.query.join(Goal).filter(
+    query = Step.query.join(Goal).filter(
         Step.date_for >= start,
         Step.date_for <= end,
         Goal.user_id == current_user.id
-    ).all()
+    )
+    if goal_id is not None:
+        query = query.filter(Step.goal_id == goal_id)
+
+    steps = query.all()
     return jsonify({'steps': [step.to_dict() for step in steps]})
