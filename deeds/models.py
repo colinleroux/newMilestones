@@ -96,6 +96,7 @@ class Step(db.Model):
     description = db.Column(db.Text)
     value = db.Column(db.Float, nullable=True)
     completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
     reflection = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, nullable=True)
     date_for = db.Column(db.Date, nullable=True)
@@ -111,6 +112,7 @@ class Step(db.Model):
             'description': self.description,
             'value': self.value,
             'completed': self.completed,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'reflection': self.reflection,
             'order': self.order,
             'date_for': self.date_for.isoformat() if self.date_for else None,

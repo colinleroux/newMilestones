@@ -180,6 +180,19 @@ def api_get_goals_with_steps():
             "color": g.color,
             "completed": g.completed,
             "progress": compute_goal_progress(g),
+            "completed_steps": [
+                {
+                    "id": step.id,
+                    "title": step.title,
+                    "completed_at": step.completed_at.isoformat() if step.completed_at else None,
+                    "date_for": step.date_for.isoformat() if step.date_for else None,
+                }
+                for step in sorted(
+                    [step for step in g.steps if step.completed],
+                    key=lambda step: step.completed_at or step.date_for or step.created_at or datetime.datetime.min,
+                    reverse=True,
+                )
+            ],
         }
 
     current_goals = [serialize_goal(g) for g in user_goals if not g.completed]
@@ -252,7 +265,12 @@ def update_step(step_id):
     data = request.get_json()
     step.title = data.get("title", step.title)
     step.description = data.get("description", step.description)
+    previous_completed = step.completed
     step.completed = data.get("completed", step.completed)
+    if step.completed and not previous_completed:
+        step.completed_at = datetime.datetime.utcnow()
+    elif not step.completed:
+        step.completed_at = None
     step.reflection = data.get("reflection", step.reflection)
     if "date_for" in data:
         step.date_for = datetime.datetime.strptime(data["date_for"], "%Y-%m-%d").date()

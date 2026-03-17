@@ -103,6 +103,25 @@
                 Plan steps for this goal
               </a>
             </div>
+
+            <template x-if="selectedGoal.completed">
+              <div class="mt-6 rounded border bg-white p-4 shadow">
+                <h4 class="text-lg font-semibold mb-3">Completed steps</h4>
+                <template x-if="selectedGoal.completed_steps && selectedGoal.completed_steps.length">
+                  <ul class="space-y-2">
+                    <template x-for="step in selectedGoal.completed_steps" :key="step.id">
+                      <li class="flex items-center justify-between rounded border border-gray-100 px-3 py-2">
+                        <span class="text-gray-800" x-text="step.title"></span>
+                        <span class="text-sm text-gray-500" x-text="formatCompletedDate(step)"></span>
+                      </li>
+                    </template>
+                  </ul>
+                </template>
+                <template x-if="!selectedGoal.completed_steps || !selectedGoal.completed_steps.length">
+                  <p class="text-sm text-gray-500 italic">No completed steps recorded.</p>
+                </template>
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -187,6 +206,16 @@ function goalPage() {
     selectGoal(goal) {
       this.selectedGoal = goal;
       this.resetGoalForm();
+    },
+
+    formatCompletedDate(step) {
+      const dateValue = step.completed_at || step.date_for;
+      if (!dateValue) return 'Date unavailable';
+      return new Date(dateValue).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     },
 
     startAddGoal() {
