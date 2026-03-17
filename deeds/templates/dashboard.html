@@ -72,6 +72,7 @@
           <div class="flex space-x-2">
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changeWeek(-1)">Prev</button>
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
+            <button class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded" @click="showCurrentMonth">This Month</button>
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changeWeek(1)">Next</button>
           </div>
 
@@ -92,11 +93,9 @@
         </div>
       </div>
 
-      <h2 class="text-lg font-semibold mt-2 text-center">
-        Week of <span x-text="formatDate(days[0]?.name)"></span>
-      </h2>
+      <h2 class="text-lg font-semibold mt-2 text-center" x-text="periodLabel"></h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         <template x-for="day in days" :key="day.name">
           <div class="p-4 border rounded shadow">
             <h3 class="font-bold mb-2" x-text="day.label"></h3>
@@ -152,6 +151,7 @@ function dashboard() {
     weeklyPlan: {},
     loading: true,
     weekOffset: 0,
+    viewMode: 'week',
     selectedGoalId: null,
     goals: {{ goals | tojson }},
 
@@ -160,11 +160,18 @@ function dashboard() {
       this.fetchSteps();
     },
     changeWeek(offset) {
+      this.viewMode = 'week';
       if (offset === 0) {
         this.weekOffset = 0;
       } else {
         this.weekOffset += offset;
       }
+      this.generateDays();
+      this.fetchSteps();
+    },
+
+    showCurrentMonth() {
+      this.viewMode = 'month';
       this.generateDays();
       this.fetchSteps();
     },
@@ -201,20 +208,37 @@ function dashboard() {
 
     generateDays() {
       const today = new Date();
-      const monday = new Date(today);
-      const dayOfWeek = today.getDay();
-      const diffToMonday = (dayOfWeek + 6) % 7;
-      monday.setDate(today.getDate() - diffToMonday + this.weekOffset * 7);
+      if (this.viewMode === 'month') {
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const numberOfDays = lastDay.getDate();
 
-      this.days = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        const name = date.toISOString().split('T')[0];
-        return {
-          label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-          name: name
-        };
-      });
+        this.days = Array.from({ length: numberOfDays }, (_, i) => {
+          const date = new Date(year, month, i + 1);
+          const name = date.toISOString().split('T')[0];
+          return {
+            label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+            name: name
+          };
+        });
+      } else {
+        const monday = new Date(today);
+        const dayOfWeek = today.getDay();
+        const diffToMonday = (dayOfWeek + 6) % 7;
+        monday.setDate(today.getDate() - diffToMonday + this.weekOffset * 7);
+
+        this.days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
+          const name = date.toISOString().split('T')[0];
+          return {
+            label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+            name: name
+          };
+        });
+      }
 
       this.weeklyPlan = {};
       for (const day of this.days) {
@@ -292,6 +316,21 @@ function dashboard() {
     formatDate(dateStr) {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
       return new Date(dateStr).toLocaleDateString(undefined, options);
+    },
+
+    get periodLabel() {
+      if (!this.days.length) {
+        return '';
+      }
+
+      if (this.viewMode === 'month') {
+        return new Date(this.days[0].name).toLocaleDateString(undefined, {
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+
+      return `Week of ${this.formatDate(this.days[0].name)}`;
     }
   };
 }
