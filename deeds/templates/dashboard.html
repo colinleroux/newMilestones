@@ -3,39 +3,53 @@
 <div x-data="dashboard()">
   <div class="grid lg:grid-cols-4 gap-4">
     <div class="lg:col-span-1">
-      <template x-if="selectedGoalId !== null">
-        <div class="mb-3">
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <h3 class="text-xl font-semibold" x-text="showCompletedGoals ? 'Completed goals' : 'Current goals'"></h3>
+        <div class="flex items-center gap-2">
+          <template x-if="selectedGoalId !== null">
+            <button
+              class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              @click="clearGoalFilter"
+            >
+              All goals
+            </button>
+          </template>
           <button
-            class="w-full px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            @click="clearGoalFilter"
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-700 transition hover:bg-amber-100"
+            @click="toggleCompletedGoals"
+            :title="showCompletedGoals ? 'Show current goals' : 'Show completed goals'"
+            aria-label="Toggle completed goals"
           >
-            Show all current goals & related steps
+            <span class="text-lg">🏆</span>
           </button>
         </div>
-      </template>
-      <h3 class="text-xl font-semibold mb-2">Your current goals</h3>
+      </div>
+      <p class="mb-4 text-sm italic text-gray-600" x-text="sidebarHint"></p>
 
       <div class="space-y-3">
-        <template x-if="goals.length === 0">
+        <template x-if="visibleGoals.length === 0">
           <div class="p-3 bg-gray-100 text-gray-700 rounded text-sm">
-            You haven't created any goals yet.
-            <button
-              class="px-3 py-1.5 ml-2 text-sm bg-green-600 text-white rounded"
-              @click="window.location.href='/goalplanner'"
-            >
-              +
-            </button>
+            <span x-text="showCompletedGoals ? `You haven't completed any goals yet.` : `You haven't created any goals yet.`"></span>
+            <template x-if="!showCompletedGoals">
+              <button
+                class="px-3 py-1.5 ml-2 text-sm bg-green-600 text-white rounded"
+                @click="window.location.href='/goalplanner'"
+              >
+                +
+              </button>
+            </template>
           </div>
         </template>
 
-        <template x-for="goal in goals" :key="goal.id">
+        <template x-for="goal in visibleGoals" :key="`${showCompletedGoals ? 'completed' : 'current'}-${goal.id}`">
           <div
             class="p-3 rounded shadow cursor-pointer hover:bg-gray-100"
             :style="'border-left: 12px solid ' + goal.color"
             @click="selectGoal(goal)"
             :class="[
               selectedGoalId === goal.id ? 'ring-2 ring-offset-1 ring-blue-400' : '',
-              goal.progress === 100 ? 'bg-green-100' : ''
+              goal.completed || goal.progress === 100 ? 'bg-green-100' : ''
             ].join(' ')"
           >
             <div class="font-medium flex justify-between items-center">
@@ -53,7 +67,7 @@
               </div>
             </template>
 
-            <template x-if="goal.progress === 100 && !goal.completed">
+            <template x-if="goal.progress === 100 && !goal.completed && !showCompletedGoals">
               <div class="flex items-center justify-end mt-2">
                 <input type="checkbox"
                        @change="markGoalCompleted(goal)"
@@ -197,6 +211,8 @@ function dashboard() {
     viewMode: 'week',
     selectedGoalId: null,
     goals: {{ goals | tojson }},
+    completedGoals: {{ completed_goals | tojson }},
+    showCompletedGoals: false,
 
     init() {
       this.generateDays();
@@ -249,6 +265,12 @@ function dashboard() {
       this.fetchSteps();
     },
 
+    toggleCompletedGoals() {
+      this.showCompletedGoals = !this.showCompletedGoals;
+      this.selectedGoalId = null;
+      this.fetchSteps();
+    },
+
     async markGoalCompleted(goal) {
       try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -263,6 +285,10 @@ function dashboard() {
 
         if (!res.ok) throw new Error('Failed to update goal');
         this.goals = this.goals.filter(g => g.id !== goal.id);
+        this.completedGoals.unshift({ ...goal, completed: true, progress: 100 });
+        if (this.showCompletedGoals) {
+          this.selectedGoalId = null;
+        }
       } catch (err) {
         console.error(err);
         alert('Could not mark goal as completed.');
@@ -424,6 +450,22 @@ function dashboard() {
         console.error(err);
         alert('Could not save reflection.');
       }
+    },
+
+    get visibleGoals() {
+      return this.showCompletedGoals ? this.completedGoals : this.goals;
+    },
+
+    get sidebarHint() {
+      if (this.selectedGoalId !== null) {
+        return 'Showing steps for the selected goal.';
+      }
+
+      if (this.showCompletedGoals) {
+        return 'Browse your achieved goals.';
+      }
+
+      return 'Showing all current goals.';
     },
 
     get periodLabel() {

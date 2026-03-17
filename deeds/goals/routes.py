@@ -17,14 +17,16 @@ def serialize_goal(goal):
         "name": goal.name,
         "motivation": goal.motivation,
         "color": goal.color,
-        "progress": compute_goal_progress(goal)
+        "progress": compute_goal_progress(goal),
+        "completed": goal.completed,
     }
 
 
 @goals.route("/dashboard")
 @login_required
 def dashboard():
-    goals_list = Goal.query.filter_by(user_id=current_user.id, completed=False).all()
+    current_goals = Goal.query.filter_by(user_id=current_user.id, completed=False).all()
+    completed_goals = Goal.query.filter_by(user_id=current_user.id, completed=True).all()
 
     today = datetime.date.today()
     monday = today - datetime.timedelta(days=today.weekday())
@@ -36,9 +38,16 @@ def dashboard():
     ).order_by(Step.date_for).all()
 
     # Serialize goals for Alpine
-    serialized_goals = [serialize_goal(g) for g in goals_list]
+    serialized_goals = [serialize_goal(g) for g in current_goals]
+    serialized_completed_goals = [serialize_goal(g) for g in completed_goals]
 
-    return render_template("dashboard.html", goals=serialized_goals, steps=steps, week_start=monday)
+    return render_template(
+        "dashboard.html",
+        goals=serialized_goals,
+        completed_goals=serialized_completed_goals,
+        steps=steps,
+        week_start=monday,
+    )
 
 
 @goals.route("/weeklyplanner")
