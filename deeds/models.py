@@ -62,33 +62,15 @@ class Goal(db.Model):
     description = db.Column(db.Text)
     color = db.Column(db.String(20), default="#0d9488")
     motivation = db.Column(db.Text, nullable=True)
-    milestones_enabled = db.Column(db.Boolean, default=False)
 
     completed = db.Column(db.Boolean, default=False)  # ✅ New field
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     steps = db.relationship("Step", backref="goal", cascade="all, delete-orphan")
-    milestones = db.relationship('Milestone', backref='goal', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"Goal('{self.name}', color='{self.color}', completed={self.completed})"
 
-
-class Milestone(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    goal_id = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
-    percentage = db.Column(db.Float, nullable=False, default=0.0)  # Contribution to goal
-    color = db.Column(db.String(20), default="#60A5FA")
-    achieved = db.Column(db.Boolean, default=False)
-    deadline = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    steps = db.relationship('Step', backref='milestone', cascade='all, delete-orphan')
-
-    def __repr__(self):
-        return f"<Milestone {self.name} ({self.percentage}%) for Goal {self.goal_id}>"
 
 class Step(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -102,7 +84,6 @@ class Step(db.Model):
     date_for = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     goal_id = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable=False)
-    milestone_id = db.Column(db.Integer, db.ForeignKey('milestone.id'), nullable=True)
     percentage = db.Column(db.Float, nullable=True)
 
     def to_dict(self):

@@ -99,6 +99,7 @@
         <div class="flex justify-between items-center ">
           <div class="flex space-x-2">
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(-1)">Prev</button>
+            <button class="px-3 py-1.5 text-sm bg-teal-500 text-white rounded" @click="showToday">Today</button>
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
             <button class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded" @click="showCurrentMonth">This Month</button>
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(1)">Next</button>
@@ -237,6 +238,7 @@ function dashboard() {
     days: [],
     weeklyPlan: {},
     loading: true,
+    dayOffset: 0,
     weekOffset: 0,
     monthOffset: 0,
     viewMode: 'week',
@@ -258,7 +260,9 @@ function dashboard() {
     },
 
     changePeriod(offset) {
-      if (this.viewMode === 'month') {
+      if (this.viewMode === 'day') {
+        this.dayOffset += offset;
+      } else if (this.viewMode === 'month') {
         this.monthOffset += offset;
       } else {
         this.weekOffset += offset;
@@ -268,6 +272,7 @@ function dashboard() {
     },
 
     changeWeek(offset) {
+      this.dayOffset = 0;
       this.viewMode = 'week';
       this.monthOffset = 0;
       if (offset === 0) {
@@ -280,8 +285,16 @@ function dashboard() {
     },
 
     showCurrentMonth() {
+      this.dayOffset = 0;
       this.viewMode = 'month';
       this.monthOffset = 0;
+      this.generateDays();
+      this.fetchSteps();
+    },
+
+    showToday() {
+      this.viewMode = 'day';
+      this.dayOffset = 0;
       this.generateDays();
       this.fetchSteps();
     },
@@ -328,7 +341,15 @@ function dashboard() {
 
     generateDays() {
       const today = new Date();
-      if (this.viewMode === 'month') {
+      if (this.viewMode === 'day') {
+        const date = new Date(today);
+        date.setDate(today.getDate() + this.dayOffset);
+        const name = this.toLocalDateString(date);
+        this.days = [{
+          label: date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
+          name: name
+        }];
+      } else if (this.viewMode === 'month') {
         const firstDay = new Date(today.getFullYear(), today.getMonth() + this.monthOffset, 1);
         const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0);
         const numberOfDays = lastDay.getDate();
@@ -506,6 +527,11 @@ function dashboard() {
 
       if (this.viewMode === 'month') {
         return this.formatMonthYear(this.days[0].name);
+      }
+
+      if (this.viewMode === 'day') {
+        const prefix = this.dayOffset === 0 ? 'Today' : 'Day';
+        return `${prefix}: ${this.formatDate(this.days[0].name)}`;
       }
 
       return `Week of ${this.formatDate(this.days[0].name)}`;
