@@ -101,8 +101,8 @@ class Step(db.Model):
     date_for = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     goal_id = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable=False)
-    milestone_id = db.Column(db.Integer, db.ForeignKey('milestone.id'), nullable=True)  # Nullable for catch-all or direct-to-goal steps
-    percentage = db.Column(db.Float, nullable=True)  # % contribution toward milestone
+    milestone_id = db.Column(db.Integer, db.ForeignKey('milestone.id'), nullable=True)
+    percentage = db.Column(db.Float, nullable=True)
 
     def to_dict(self):
         return {
@@ -118,9 +118,6 @@ class Step(db.Model):
             'goal_id': self.goal_id,
             'goal_name': self.goal.name if self.goal else None,
             'goal_color': self.goal.color if self.goal else "#ccc",
-            'milestone_id': self.milestone_id,
-            'milestone_name': self.milestone.name if self.milestone else None,
-            'milestone_percentage': self.percentage,
         }
 
     def __repr__(self):
