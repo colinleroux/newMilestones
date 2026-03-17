@@ -72,8 +72,12 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
       <template x-for="day in days" :key="day.name">
         <div
-          class="bg-white p-4 rounded-xl shadow min-h-[200px]"
-          :class="{'border-2 border-dashed border-blue-400': dragOverDay === day.name}"
+          class="p-4 rounded-xl shadow min-h-[200px] border border-transparent"
+          :class="{
+            'border-2 border-dashed border-blue-400': dragOverDay === day.name,
+            'bg-amber-50 border-amber-200': isPastDay(day),
+            'bg-white': !isPastDay(day)
+          }"
           @dragover.prevent="dragOverDay = day.name"
           @dragleave="dragOverDay = null"
           @drop="handleDrop(day.name)"
@@ -198,6 +202,16 @@ function plannerApp() {
       startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
       const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
       return startOfWeek.toLocaleDateString(undefined, options);
+    },
+
+    isPastDay(day) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const dayDate = new Date(day.fullDate);
+      dayDate.setHours(0, 0, 0, 0);
+
+      return dayDate < today;
     },
 
     populateWeeklyPlan(steps) {
