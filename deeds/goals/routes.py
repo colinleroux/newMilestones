@@ -186,6 +186,7 @@ def api_get_goals_with_steps():
                     "title": step.title,
                     "completed_at": step.completed_at.isoformat() if step.completed_at else None,
                     "date_for": step.date_for.isoformat() if step.date_for else None,
+                    "reflection": step.reflection,
                 }
                 for step in sorted(
                     [step for step in g.steps if step.completed],

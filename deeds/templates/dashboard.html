@@ -129,6 +129,48 @@
                       >
                       <label class="text-sm text-gray-700" x-text="step.completed ? 'Completed' : 'Mark as complete'"></label>
                     </div>
+
+                    <template x-if="step.completed">
+                      <div class="mt-3 rounded border border-green-100 bg-white/80 p-3">
+                        <button
+                          type="button"
+                          class="text-sm font-medium text-blue-600 hover:underline"
+                          @click="toggleReflectionEditor(step)"
+                          x-text="step.showReflectionEditor || step.reflection ? 'Edit reflection' : 'Add reflection'"
+                        ></button>
+
+                        <template x-if="step.reflection && !step.showReflectionEditor">
+                          <p class="mt-2 text-sm text-gray-700 whitespace-pre-line" x-text="step.reflection"></p>
+                        </template>
+
+                        <template x-if="step.showReflectionEditor">
+                          <div class="mt-2 space-y-2">
+                            <textarea
+                              x-model="step.reflectionDraft"
+                              rows="3"
+                              class="w-full rounded border border-gray-300 p-2 text-sm text-gray-700"
+                              placeholder="How did this feel? Was it easy? Any little lessons learned?"
+                            ></textarea>
+                            <div class="flex items-center gap-2">
+                              <button
+                                type="button"
+                                class="rounded bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
+                                @click="saveReflection(step)"
+                              >
+                                Save reflection
+                              </button>
+                              <button
+                                type="button"
+                                class="rounded bg-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-300"
+                                @click="cancelReflection(step)"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
                   </div>
                 </template>
               </div>
@@ -286,6 +328,8 @@ function dashboard() {
           for (const step of data.steps) {
             const day = step.date_for;
             if (!this.weeklyPlan[day]) this.weeklyPlan[day] = [];
+            step.showReflectionEditor = false;
+            step.reflectionDraft = step.reflection || '';
             this.weeklyPlan[day].push(step);
           }
 
@@ -310,6 +354,8 @@ function dashboard() {
         const data = await response.json();
         step.completed = data.completed;
         if (data.reflection !== undefined) step.reflection = data.reflection;
+        step.reflectionDraft = data.reflection || step.reflectionDraft || '';
+        step.showReflectionEditor = data.completed;
         this.refreshGoalProgress(step.goal_id);
       } catch (err) {
         console.error(err);
@@ -344,6 +390,40 @@ function dashboard() {
         month: 'long',
         year: 'numeric'
       });
+    },
+
+    toggleReflectionEditor(step) {
+      step.showReflectionEditor = !step.showReflectionEditor;
+      step.reflectionDraft = step.reflection || '';
+    },
+
+    cancelReflection(step) {
+      step.showReflectionEditor = false;
+      step.reflectionDraft = step.reflection || '';
+    },
+
+    async saveReflection(step) {
+      try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const response = await fetch(`/api/steps/${step.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({ reflection: step.reflectionDraft })
+        });
+
+        if (!response.ok) throw new Error('Failed to save reflection');
+
+        const data = await response.json();
+        step.reflection = data.reflection || '';
+        step.reflectionDraft = step.reflection;
+        step.showReflectionEditor = false;
+      } catch (err) {
+        console.error(err);
+        alert('Could not save reflection.');
+      }
     },
 
     get periodLabel() {
