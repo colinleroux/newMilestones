@@ -146,12 +146,29 @@
 
                     <template x-if="step.completed">
                       <div class="mt-3 rounded border border-green-100 bg-white/80 p-3">
-                        <button
-                          type="button"
-                          class="text-sm font-medium text-blue-600 hover:underline"
-                          @click="toggleReflectionEditor(step)"
-                          x-text="step.showReflectionEditor || step.reflection ? 'Edit reflection' : 'Add reflection'"
-                        ></button>
+                        <div class="flex items-start justify-between gap-3">
+                          <template x-if="!step.reflection">
+                            <button
+                              type="button"
+                              class="text-sm font-medium text-blue-600 hover:underline"
+                              @click="toggleReflectionEditor(step)"
+                            >
+                              Add reflection
+                            </button>
+                          </template>
+
+                          <template x-if="step.reflection">
+                            <button
+                              type="button"
+                              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 text-blue-600 transition hover:bg-blue-50"
+                              @click="toggleReflectionEditor(step)"
+                              title="Edit reflection"
+                              aria-label="Edit reflection"
+                            >
+                              <span class="text-sm">✎</span>
+                            </button>
+                          </template>
+                        </div>
 
                         <template x-if="step.reflection && !step.showReflectionEditor">
                           <p class="mt-2 text-sm text-gray-700 whitespace-pre-line" x-text="step.reflection"></p>
