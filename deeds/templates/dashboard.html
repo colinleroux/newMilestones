@@ -14,15 +14,29 @@
               All goals
             </button>
           </template>
-          <button
-            type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-700 transition hover:bg-amber-100"
-            @click="toggleCompletedGoals"
-            :title="showCompletedGoals ? 'Show current goals' : 'Show completed goals'"
-            aria-label="Toggle completed goals"
-          >
-            <span class="text-lg">🏆</span>
-          </button>
+          <template x-if="!showCompletedGoals">
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-700 transition hover:bg-amber-100"
+              @click="toggleCompletedGoals"
+              title="Show completed goals"
+              aria-label="Show completed goals"
+            >
+              <span class="text-lg">🏆</span>
+            </button>
+          </template>
+          <template x-if="showCompletedGoals">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              @click="toggleCompletedGoals"
+              title="Back to current goals"
+              aria-label="Back to current goals"
+            >
+              <span aria-hidden="true">←</span>
+              <span>Goals</span>
+            </button>
+          </template>
         </div>
       </div>
       <p class="mb-4 text-sm italic text-gray-600" x-text="sidebarHint"></p>
