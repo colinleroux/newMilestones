@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-  <h1 class="text-2xl font-bold">Weekly Step Planner</h1>
+  <h1 class="text-2xl font-bold">Step Planner</h1>
   <div class="flex space-x-4">
     <a href="{{ url_for('goals.dashboard') }}"
        class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
@@ -48,57 +48,60 @@
   <div class="lg:w-2/3 w-full p-4" x-show="selectedGoal !== null" x-transition>
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-bold">
-        Weekly plan for <span x-text="selectedGoal?.name"></span>
+        Plan for <span x-text="selectedGoal?.name"></span>
       </h2>
     </div>
 
     <div class="flex justify-between items-center mb-4">
-      <div>
+      <div class="flex space-x-2">
         <button @click="goToCurrentWeek" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
           This Week
         </button>
+        <button @click="goToCurrentMonth" class="bg-amber-500 text-white px-3 py-1 rounded hover:bg-amber-600 transition">
+          This Month
+        </button>
       </div>
-      <div class="text-lg font-semibold" x-text="`Week beginning ${getWeekStartDateFormatted()}`"></div>
+      <div class="text-lg font-semibold" x-text="periodLabel"></div>
       <div class="space-x-2">
-        <button @click="changeWeek(-1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
+        <button @click="changePeriod(-1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
           Prev
         </button>
-        <button @click="changeWeek(1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
+        <button @click="changePeriod(1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
           Next
         </button>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <template x-for="day in days" :key="day.name">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <template x-for="day in days" :key="day.fullDate">
         <div
           class="p-4 rounded-xl shadow min-h-[200px] border border-transparent"
           :class="{
-            'border-2 border-dashed border-blue-400': dragOverDay === day.name,
+            'border-2 border-dashed border-blue-400': dragOverDay === day.fullDate,
             'bg-amber-50 border-amber-200': isPastDay(day),
             'bg-white': !isPastDay(day)
           }"
-          @dragover.prevent="dragOverDay = day.name"
+          @dragover.prevent="dragOverDay = day.fullDate"
           @dragleave="dragOverDay = null"
-          @drop="handleDrop(day.name)"
+          @drop="handleDrop(day.fullDate)"
         >
           <h3 class="font-bold text-lg mb-1" x-text="day.label"></h3>
           <p class="text-xs text-gray-500 mb-2" x-text="day.dateFormatted"></p>
 
           <ul class="space-y-2 mb-2">
-            <template x-for="(step, index) in weeklyPlan[day.name]" :key="step.id">
+            <template x-for="(step, index) in weeklyPlan[day.fullDate] || []" :key="step.id">
               <li
                 class="rounded px-2 py-1 text-sm"
                 :style="selectedGoal ? `background-color: ${selectedGoal.color};` : ''"
                 draggable="true"
-                @dragstart="startDrag(day.name, index)"
+                @dragstart="startDrag(day.fullDate, index)"
               >
                 <div class="flex justify-between items-center text-white">
                   <div>
-                    <input type="checkbox" :checked="step.completed" @change="toggleComplete(day.name, index, $event)" class="mr-1" />
+                    <input type="checkbox" :checked="step.completed" @change="toggleComplete(day.fullDate, index, $event)" class="mr-1" />
                     <span x-text="step.title" :class="{'line-through': step.completed}"></span>
                   </div>
-                  <button @click="removeStep(day.name, step.id)" class="text-xs hover:underline">&times;</button>
+                  <button @click="removeStep(day.fullDate, step.id)" class="text-xs hover:underline">&times;</button>
                 </div>
                 <div x-show="step.completed">
                   <textarea
@@ -116,13 +119,13 @@
             <div class="mt-2">
               <input
                 type="text"
-                x-model="newStep[day.name]"
+                x-model="newStep[day.fullDate]"
                 placeholder="Add step..."
                 class="text-sm w-full border rounded p-1 mb-2"
               />
 
               <button
-                @click="addStep(day.name)"
+                @click="addStep(day.fullDate)"
                 class="text-white text-xs px-2 py-1 rounded"
                 :style="selectedGoal ? `background-color: ${selectedGoal.color};` : ''"
               >
@@ -140,20 +143,14 @@
 function plannerApp() {
   return {
     csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-    days: [
-      { name: 'Monday', label: 'Monday' },
-      { name: 'Tuesday', label: 'Tuesday' },
-      { name: 'Wednesday', label: 'Wednesday' },
-      { name: 'Thursday', label: 'Thursday' },
-      { name: 'Friday', label: 'Friday' },
-      { name: 'Saturday', label: 'Saturday' },
-      { name: 'Sunday', label: 'Sunday' }
-    ],
+    days: [],
     goals: [],
     completedGoals: [],
     selectedGoalId: null,
     selectedGoal: null,
     weekOffset: 0,
+    monthOffset: 0,
+    viewMode: 'week',
     weeklyPlan: {},
     newStep: {},
     repeatAllDays: {},
@@ -162,12 +159,8 @@ function plannerApp() {
 
     async init() {
       this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      this.days = this.getWeekDates();
-      this.days.forEach(day => {
-        this.weeklyPlan[day.name] = [];
-        this.newStep[day.name] = '';
-        this.repeatAllDays[day.name] = false;
-      });
+      this.days = this.getVisibleDates();
+      this.resetDayBuckets();
       await this.fetchGoals();
     },
 
@@ -176,7 +169,7 @@ function plannerApp() {
       if (!goal.expanded && this.selectedGoal?.id === goal.id) {
         this.selectedGoal = null;
         this.selectedGoalId = null;
-        this.days.forEach(day => this.weeklyPlan[day.name] = []);
+        this.resetDayBuckets();
       }
     },
 
@@ -190,18 +183,18 @@ function plannerApp() {
     async loadSteps() {
       if (!this.selectedGoal) return;
 
-      const res = await fetch(`/api/goals/${this.selectedGoal.id}/steps?week_offset=${this.weekOffset}`);
+      const start = this.days[0]?.fullDate;
+      const end = this.days[this.days.length - 1]?.fullDate;
+      const res = await fetch(`/api/steps/range?goal_id=${this.selectedGoal.id}&start=${start}&end=${end}`);
       const data = await res.json();
       this.populateWeeklyPlan(data.steps || []);
     },
 
-    getWeekStartDateFormatted() {
-      const today = new Date();
-      const offsetToMonday = (today.getDay() + 6) % 7;
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
-      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-      return startOfWeek.toLocaleDateString(undefined, options);
+    toLocalDateString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     },
 
     isPastDay(day) {
@@ -214,24 +207,24 @@ function plannerApp() {
       return dayDate < today;
     },
 
+    resetDayBuckets() {
+      this.weeklyPlan = {};
+      this.days.forEach(day => {
+        this.weeklyPlan[day.fullDate] = [];
+        this.newStep[day.fullDate] = '';
+        this.repeatAllDays[day.fullDate] = false;
+      });
+    },
+
     populateWeeklyPlan(steps) {
-      this.days.forEach(day => this.weeklyPlan[day.name] = []);
+      this.resetDayBuckets();
       for (const step of steps) {
-        const date = new Date(step.date_for);
-        const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-        if (this.weeklyPlan[dayName]) this.weeklyPlan[dayName].push(step);
+        if (this.weeklyPlan[step.date_for]) this.weeklyPlan[step.date_for].push(step);
       }
     },
 
-    getDateForDay(dayName) {
-      const today = new Date();
-      const dayIndex = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(dayName);
-      const offsetToMonday = (today.getDay() + 6) % 7;
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
-      const targetDate = new Date(startOfWeek);
-      targetDate.setDate(startOfWeek.getDate() + ((dayIndex + 6) % 7));
-      return targetDate.toISOString().split('T')[0];
+    getVisibleDates() {
+      return this.viewMode === 'month' ? this.getMonthDates() : this.getWeekDates();
     },
 
     getWeekDates() {
@@ -240,13 +233,31 @@ function plannerApp() {
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
 
-      return this.days.map((day, index) => {
+      const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+      return weekDays.map((day, index) => {
         const date = new Date(startOfWeek);
         date.setDate(startOfWeek.getDate() + index);
         return {
-          ...day,
+          label: day,
           dateFormatted: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-          fullDate: date.toISOString().split('T')[0],
+          fullDate: this.toLocalDateString(date),
+        };
+      });
+    },
+
+    getMonthDates() {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() + this.monthOffset, 1);
+      const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0);
+      const numberOfDays = lastDay.getDate();
+
+      return Array.from({ length: numberOfDays }, (_, index) => {
+        const date = new Date(firstDay.getFullYear(), firstDay.getMonth(), index + 1);
+        return {
+          label: date.toLocaleDateString(undefined, { weekday: 'long' }),
+          dateFormatted: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          fullDate: this.toLocalDateString(date),
         };
       });
     },
@@ -259,35 +270,53 @@ function plannerApp() {
     },
 
     goToCurrentWeek() {
+      this.viewMode = 'week';
       this.weekOffset = 0;
-      this.days = this.getWeekDates();
+      this.monthOffset = 0;
+      this.days = this.getVisibleDates();
+      this.resetDayBuckets();
       if (this.selectedGoal) {
         this.loadSteps();
       }
     },
 
-    changeWeek(offset) {
-      this.weekOffset += offset;
-      this.days = this.getWeekDates();
+    goToCurrentMonth() {
+      this.viewMode = 'month';
+      this.monthOffset = 0;
+      this.days = this.getVisibleDates();
+      this.resetDayBuckets();
       if (this.selectedGoal) {
         this.loadSteps();
       }
     },
 
-    async addStep(dayName) {
+    changePeriod(offset) {
+      if (this.viewMode === 'month') {
+        this.monthOffset += offset;
+      } else {
+        this.weekOffset += offset;
+      }
+      this.days = this.getVisibleDates();
+      this.resetDayBuckets();
+      if (this.selectedGoal) {
+        this.loadSteps();
+      }
+    },
+
+    async addStep(dayKey) {
       if (!this.selectedGoal) return;
-      const text = this.newStep[dayName]?.trim();
-      const repeat = this.repeatAllDays[dayName];
+      const text = this.newStep[dayKey]?.trim();
+      const repeat = this.repeatAllDays[dayKey];
 
       if (!text) return;
 
-      const addToDay = async (day) => {
+      const addToDay = async (dateKey) => {
         const payload = {
           title: text,
           completed: false,
           description: '',
           reflection: '',
-          date_for: this.getDateForDay(day)
+          date_for: dateKey
         };
         const res = await fetch(`/api/goals/${this.selectedGoal.id}/steps`, {
           method: 'POST',
@@ -298,20 +327,20 @@ function plannerApp() {
           body: JSON.stringify(payload)
         });
         const newStep = await res.json();
-        this.weeklyPlan[day].push({ ...newStep, color: this.selectedGoal.color });
+        this.weeklyPlan[dateKey].push({ ...newStep, color: this.selectedGoal.color });
       };
 
       if (!repeat) {
-        await addToDay(dayName);
+        await addToDay(dayKey);
       } else {
-        for (const d of this.days) await addToDay(d.name);
+        for (const d of this.days) await addToDay(d.fullDate);
       }
 
-      this.newStep[dayName] = '';
-      this.repeatAllDays[dayName] = false;
+      this.newStep[dayKey] = '';
+      this.repeatAllDays[dayKey] = false;
     },
 
-    async removeStep(dayName, stepId) {
+    async removeStep(dayKey, stepId) {
       await fetch(`/api/steps/${stepId}`, {
         method: 'DELETE',
         headers: {
@@ -319,11 +348,11 @@ function plannerApp() {
           'X-CSRFToken': this.csrfToken
         }
       });
-      this.weeklyPlan[dayName] = this.weeklyPlan[dayName].filter(s => s.id !== stepId);
+      this.weeklyPlan[dayKey] = this.weeklyPlan[dayKey].filter(s => s.id !== stepId);
     },
 
-    async toggleComplete(dayName, index, event) {
-      const step = this.weeklyPlan[dayName][index];
+    async toggleComplete(dayKey, index, event) {
+      const step = this.weeklyPlan[dayKey][index];
       const newCompleted = event.target.checked;
       step.completed = newCompleted;
       const res = await fetch(`/api/steps/${step.id}`, {
@@ -335,7 +364,7 @@ function plannerApp() {
         body: JSON.stringify({ completed: newCompleted, title: step.title })
       });
       const updated = await res.json();
-      this.weeklyPlan[dayName][index].completed = updated.completed;
+      this.weeklyPlan[dayKey][index].completed = updated.completed;
     },
 
     async updateReflection(step) {
@@ -349,14 +378,14 @@ function plannerApp() {
       });
     },
 
-    startDrag(dayName, index) {
-      this.dragData = { fromDay: dayName, index };
+    startDrag(dayKey, index) {
+      this.dragData = { fromDay: dayKey, index };
     },
 
-    async handleDrop(targetDayName) {
+    async handleDrop(targetDayKey) {
       const { fromDay, index } = this.dragData;
       const step = this.weeklyPlan[fromDay][index];
-      const newDate = this.getDateForDay(targetDayName);
+      const newDate = targetDayKey;
       await fetch(`/api/steps/${step.id}`, {
         method: 'PATCH',
         headers: {
@@ -366,8 +395,18 @@ function plannerApp() {
         body: JSON.stringify({ date_for: newDate, title: step.title })
       });
       this.weeklyPlan[fromDay].splice(index, 1);
-      this.weeklyPlan[targetDayName].push({ ...step, date_for: newDate });
+      this.weeklyPlan[targetDayKey].push({ ...step, date_for: newDate });
       this.dragOverDay = null;
+    },
+
+    get periodLabel() {
+      if (!this.days.length) return '';
+      const [year, month, day] = this.days[0].fullDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      if (this.viewMode === 'month') {
+        return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      }
+      return `Week beginning ${date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}`;
     }
   };
 }
