@@ -124,19 +124,30 @@
 
       <h2 class="text-lg font-semibold mt-2 text-center" x-text="periodLabel"></h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      <div
+        class="mt-4 grid gap-4"
+        :class="{
+          'grid-cols-1': viewMode === 'day',
+          'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4': viewMode !== 'day'
+        }"
+      >
         <template x-for="day in days" :key="day.name">
-          <div class="p-4 border rounded shadow">
+          <div class="p-4 border rounded shadow" :class="{ 'max-w-none w-full': viewMode === 'day' }">
             <h3 class="font-bold mb-2" x-text="day.label"></h3>
 
             <template x-if="weeklyPlan[day.name]?.length > 0">
-              <div>
+              <div
+                :class="{
+                  'grid gap-4 md:grid-cols-2 xl:grid-cols-3': viewMode === 'day',
+                  'space-y-3': viewMode !== 'day'
+                }"
+              >
                 <template
                   x-for="step in (weeklyPlan[day.name] || []).filter(s => !selectedGoalId || s.goal_id === selectedGoalId)"
                   :key="`${day.name}-${step.id}`"
                 >
                   <div
-                    class="mb-3 p-3 rounded-lg shadow border border-gray-200"
+                    class="p-3 rounded-lg shadow border border-gray-200"
                     :style="`border-left: 8px solid ${step.goal_color};`"
                     :class="step.completed ? 'bg-green-50' : 'bg-white'"
                   >
