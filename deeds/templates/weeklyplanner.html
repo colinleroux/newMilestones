@@ -1,0 +1,521 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold">Weekly Step Planner</h1>
+  <div class="flex space-x-4">
+    <a href="{{ url_for('goals.dashboard') }}"
+       class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+      Dashboard
+    </a>
+    <a href="{{ url_for('goals.milestone_view') }}"
+       class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+      Milestones
+    </a>
+  </div>
+</div>
+
+<div class="min-h-screen flex flex-col lg:flex-row" x-data="plannerApp()">
+  <!-- Goals List -->
+  <div class="lg:w-1/3 w-full p-4 space-y-4 overflow-y-auto">
+    <h2 class="text-xl font-bold mb-4" x-text="selectedGoal ? 'Select a milestone to add steps' : 'Select a goal to add steps'"></h2>
+
+    <!-- Goal List -->
+    <template x-for="goal in goals" :key="goal.id">
+      <div class="bg-white rounded-xl shadow p-4 border-l-8 mb-2" :style="`border-left-color: ${goal.color}`">
+        <!-- Goal Header -->
+        <div @click="toggleGoal(goal)" class="cursor-pointer flex justify-between items-center">
+  <div>
+    <h3 class="text-lg font-semibold flex items-center space-x-2">
+      <span x-text="goal.name"></span>
+      <template x-if="goal.progress === 100">
+        <span class="text-green-600 text-xs font-semibold border border-green-600 px-2 py-0.5 rounded-full">
+          ✓ Achieved
+        </span>
+      </template>
+    </h3>
+    <p class="text-sm text-gray-500 italic" x-text="goal.motivation"></p>
+  </div>
+  <div class="text-sm text-blue-500" x-text="goal.expanded ? '−' : '+'"></div>
+</div>
+
+        <!-- Milestone List -->
+        <div x-show="goal.expanded" class="mt-2 pl-4 space-y-1">
+          <template x-if="!goal.milestones || goal.milestones.length === 0">
+            <div class="text-sm text-gray-400 italic">No milestones</div>
+          </template>
+<template
+  x-if="selectedGoal && selectedGoal.id === goal.id && selectedMilestone && selectedGoal.milestones_enabled"
+>
+  <button
+    class="text-sm text-blue-600 underline mt-1"
+    @click="deselectMilestone(goal)"
+  >
+    ⬅ Show all steps for this goal
+  </button>
+</template>
+
+
+          <template x-for="milestone in goal.milestones" :key="milestone.id">
+            <div
+              @click="selectMilestone(goal, milestone)"
+              class="cursor-pointer p-2 rounded hover:bg-gray-100 border"
+              :class="{ 'bg-blue-100': selectedMilestone?.id === milestone.id }"
+            >
+              <span class="font-medium" x-text="milestone.name"></span>
+              <span class="text-xs text-gray-500 ml-8">Goal Contribution : </span>
+              <span class="text-xs text-gray-500 ml-2" x-text="milestone.percentage + '%'">
+              </span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Weekly Planner -->
+  <div class="lg:w-2/3 w-full p-4" x-show="selectedGoal !== null" x-transition>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">
+        🗓️ Weekly plan for <span x-text="selectedGoal?.name"></span>
+      </h2>
+    </div>
+
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <button @click="goToCurrentWeek" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
+          This Week
+        </button>
+      </div>
+      <div class="text-lg font-semibold" x-text="`Week beginning – ${getWeekStartDateFormatted()}`"></div>
+      <div class="space-x-2">
+        <button @click="changeWeek(-1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
+          ← Prev
+        </button>
+        <button @click="changeWeek(1)" class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition">
+          Next →
+        </button>
+      </div>
+    </div>
+
+    <!-- Day Columns -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <template x-for="day in days" :key="day.name">
+        <div
+          class="bg-white p-4 rounded-xl shadow min-h-[200px]"
+          :class="{'border-2 border-dashed border-blue-400': dragOverDay === day.name}"
+          @dragover.prevent="dragOverDay = day.name"
+          @dragleave="dragOverDay = null"
+          @drop="handleDrop(day.name)"
+        >
+          <h3 class="font-bold text-lg mb-1" x-text="day.label"></h3>
+          <p class="text-xs text-gray-500 mb-2" x-text="day.dateFormatted"></p>
+
+          <!-- Steps -->
+          <ul class="space-y-2 mb-2">
+            <template x-for="(step, index) in weeklyPlan[day.name]" :key="step.id">
+              <li
+                class="rounded px-2 py-1 text-sm"
+                :style="selectedGoal ? `background-color: ${selectedGoal.color};` : ''"
+                draggable="true"
+                @dragstart="startDrag(day.name, index)"
+              >
+                <div class="flex justify-between items-center text-white">
+                  <div>
+                    <input type="checkbox" :checked="step.completed" @change="toggleComplete(day.name, index, $event)" class="mr-1" />
+                    <span x-text="step.title" :class="{'line-through': step.completed}"></span>
+                    <span x-show="step.value !== null && step.value !== undefined" class="ml-2 text-xs">
+
+                    </span>
+                  </div>
+                  <button @click="removeStep(day.name, step.id)" class="text-xs hover:underline">&times;</button>
+                </div>
+                <div x-show="step.completed">
+                  <textarea
+                    x-model="step.reflection"
+                    @change="updateReflection(step, day.name, index)"
+                    placeholder="Reflection..."
+                    class="w-full mt-1 p-1 text-xs rounded"
+                  ></textarea>
+                </div>
+              </li>
+            </template>
+          </ul>
+
+         <!-- Add Step -->
+<template x-if="selectedMilestone && canAddSteps">
+  <div class="mt-2">
+    <input
+      type="text"
+      x-model="newStep[day.name]"
+      placeholder="Add step…"
+      class="text-sm w-full border rounded p-1 mb-2"
+    />
+
+    <button
+      @click="addStep(day.name)"
+      class="text-white text-xs px-2 py-1 rounded"
+      :style="selectedGoal ? `background-color: ${selectedGoal.color};` : ''"
+    >
+      Add
+    </button>
+  </div>
+</template>
+
+<template x-if="selectedMilestone && !canAddSteps">
+  <div class="mt-2 text-xs text-red-500 italic">
+    <p>
+      Cannot add steps – milestone plan must total 100%.
+    </p>
+    <a
+      :href="`/milestones#goal-${selectedGoal.id}`"
+      class="text-blue-600 underline text-xs font-medium"
+    >
+      → Fix milestone allocation for this goal
+    </a>
+  </div>
+</template>
+
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
+
+
+<!-- Alpine.js App Script -->
+<script>
+function plannerApp() {
+  return {
+    csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+    calculateWeekStart(date) {
+      const day = date.getDay();
+      const diff = (day + 6) % 7;
+      const monday = new Date(date);
+      monday.setDate(date.getDate() - diff);
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    },
+    days: [
+      { name: 'Monday', label: 'Monday' },
+      { name: 'Tuesday', label: 'Tuesday' },
+      { name: 'Wednesday', label: 'Wednesday' },
+      { name: 'Thursday', label: 'Thursday' },
+      { name: 'Friday', label: 'Friday' },
+      { name: 'Saturday', label: 'Saturday' },
+      { name: 'Sunday', label: 'Sunday' }
+    ],
+
+    allColors: ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#22d3ee', '#14b8a6', '#eab308', '#6366f1', '#7c3aed', '#0ea5e9'],
+    get availableColors() {
+      const used = this.goals.map(g => g.color);
+      return this.allColors.filter(c => !used.includes(c) || (this.editingGoal && this.goalForm.color === c));
+    },
+
+    goals: [],
+    completedGoals: [],
+    selectedGoalId: null,
+    selectedGoal: null,
+    selectedMilestone: null,
+    weekOffset: 0,
+    weekStartDate: null,
+    weeklyPlan: {},
+    newStep: {},
+    newStepValue: {},
+    repeatAllDays: {},
+    dragData: null,
+    dragOverDay: null,
+    addingGoal: false,
+    editingGoal: false,
+    goalForm: { id: null, name: '', color: '' },
+
+    async init() {
+      this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      this.days.forEach(day => {
+        this.weeklyPlan[day.name] = [];
+        this.days = this.getWeekDates();
+        this.newStep[day.name] = '';
+        this.newStepValue[day.name] = null;
+        this.repeatAllDays[day.name] = false;
+      });
+      await this.fetchGoals();
+    },
+
+toggleGoal(goal) {
+  goal.expanded = !goal.expanded;
+
+  if (goal.expanded) {
+    this.selectedGoal = goal;
+    this.selectedGoalId = goal.id;
+
+    // Auto-select the default milestone if applicable
+    if (!goal.milestones_enabled || goal.milestones.length === 1) {
+      this.selectedMilestone = goal.milestones[0];
+    } else {
+      this.selectedMilestone = null;
+    }
+
+    this.loadStepsForGoal(goal);
+  } else {
+    // Collapse logic — optional: clear selection
+    this.selectedGoal = null;
+    this.selectedGoalId = null;
+    this.selectedMilestone = null;
+  }
+},
+async loadSteps() {
+  let url;
+  if (this.selectedMilestone) {
+    url = `/api/milestones/${this.selectedMilestone.id}/steps?week_offset=${this.weekOffset}`;
+  } else if (this.selectedGoal) {
+    url = `/api/goals/${this.selectedGoal.id}/steps?week_offset=${this.weekOffset}`;
+  } else {
+    return;
+  }
+
+  const res = await fetch(url);
+  const data = await res.json();
+  const steps = data.steps;
+
+  // Clear current weekly plan
+  this.days.forEach(day => this.weeklyPlan[day.name] = []);
+
+  // Fill in steps into appropriate day
+  for (const step of steps) {
+    const stepDate = new Date(step.date_for);
+    const stepDateStr = stepDate.toISOString().split('T')[0];
+    //const dayObj = this.days.find(day => day.dateFormatted === stepDateStr);
+    const dayObj = this.days.find(day => day.fullDate === stepDateStr);
+    if (dayObj) {
+      this.weeklyPlan[dayObj.name].push(step);
+    }
+  }
+},
+get canAddSteps() {
+  if (!this.selectedGoal || !this.selectedGoal.milestones_enabled) return true;
+
+  const total = this.selectedGoal.milestones.reduce((sum, m) => sum + (m.percentage || 0), 0);
+  return total === 100;
+},
+deselectMilestone(goal) {
+      this.selectedMilestone = null;
+      this.selectedGoal = goal;
+      this.selectedGoalId = goal.id;
+      this.loadSteps();
+    },
+    async loadStepsForGoal(goal) {
+      const res = await fetch(`/api/goals/${goal.id}/steps?week_offset=${this.weekOffset}`);
+      const data = await res.json();
+      this.populateWeeklyPlan(data.steps);
+    },
+
+    async selectMilestone(goal, milestone) {
+      this.selectedGoal = goal;
+      this.selectedGoalId = goal.id;
+      this.selectedMilestone = milestone;
+      this.weekOffset = 0;
+      this.days.forEach(day => this.weeklyPlan[day.name] = []);
+      await this.loadStepsForSelectedMilestone();
+    },
+getWeekStartDateFormatted() {
+      const today = new Date();
+      const offsetToMonday = (today.getDay() + 6) % 7;
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
+      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+      return startOfWeek.toLocaleDateString(undefined, options);
+    },
+    async loadStepsForSelectedMilestone() {
+      if (!this.selectedMilestone) return;
+      const res = await fetch(`/api/milestones/${this.selectedMilestone.id}/steps?week_offset=${this.weekOffset}`);
+      const data = await res.json();
+      if (!data.steps) return;
+      this.populateWeeklyPlan(data.steps);
+    },
+
+    populateWeeklyPlan(steps) {
+      this.days.forEach(day => this.weeklyPlan[day.name] = []);
+      for (const step of steps) {
+        const date = new Date(step.date_for);
+        const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+        if (this.weeklyPlan[dayName]) this.weeklyPlan[dayName].push(step);
+      }
+    },
+
+    getWeekIsoDate() {
+      const base = new Date();
+      base.setDate(base.getDate() + this.weekOffset * 7);
+      return base.toISOString().split('T')[0];
+    },
+
+    getDateForDay(dayName) {
+      const today = new Date();
+      const dayIndex = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(dayName);
+      const offsetToMonday = (today.getDay() + 6) % 7;
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
+      const targetDate = new Date(startOfWeek);
+      targetDate.setDate(startOfWeek.getDate() + ((dayIndex + 6) % 7));
+      return targetDate.toISOString().split('T')[0];
+    },
+
+    getWeekDates() {
+      const today = new Date();
+      const offsetToMonday = (today.getDay() + 6) % 7;
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - offsetToMonday + this.weekOffset * 7);
+
+      return this.days.map((day, index) => {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + index);
+        return {
+          ...day,
+          dateFormatted: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          fullDate: date.toISOString().split('T')[0],
+        };
+      });
+    },
+
+    formatWeekRange() {
+      if (!this.weekStartDate || isNaN(this.weekStartDate.getTime())) return "Invalid Date";
+      const endDate = new Date(this.weekStartDate);
+      endDate.setDate(endDate.getDate() + 6);
+      const options = { month: 'short', day: 'numeric' };
+      return `${this.weekStartDate.toLocaleDateString(undefined, options)} – ${endDate.toLocaleDateString(undefined, options)}`;
+    },
+
+    async fetchGoals() {
+      const res = await fetch('/api/goals/full');
+      const data = await res.json();
+      this.goals = data.current_goals.map(goal => ({ ...goal, expanded: false }));
+      this.completedGoals = data.completed_goals.map(goal => ({ ...goal, expanded: false }));
+    },
+
+    prevWeek() {
+      this.weekOffset--;
+      this.days = this.getWeekDates();
+      this.loadStepsForSelectedMilestone();
+    },
+
+    nextWeek() {
+      this.weekOffset++;
+      this.days = this.getWeekDates();
+      this.loadStepsForSelectedMilestone();
+    },
+
+  goToCurrentWeek() {
+  this.weekOffset = 0;
+  this.days = this.getWeekDates();
+  if (this.selectedMilestone) {
+    this.loadStepsForSelectedMilestone();
+  } else if (this.selectedGoal) {
+    this.loadSteps();
+  }
+},
+
+
+changeWeek(offset) {
+  this.weekOffset += offset;
+  this.days = this.getWeekDates();
+  this.selectedMilestone
+    ? this.loadStepsForSelectedMilestone()
+    : this.selectedGoal
+    ? this.loadSteps()
+    : null;
+},
+
+    async addStep(dayName) {
+      if (!this.selectedMilestone) return;
+      const text = this.newStep[dayName]?.trim();
+      const value = this.selectedMilestone?.metric ? this.newStepValue[dayName] : null;
+      const repeat = this.repeatAllDays[dayName];
+
+      if (text) {
+        const addToDay = async (day) => {
+          const payload = {
+            title: text,
+            value,
+            completed: false,
+            description: '',
+            reflection: '',
+            date_for: this.getDateForDay(day)
+          };
+          const res = await fetch(`/api/milestones/${this.selectedMilestone.id}/steps`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': this.csrfToken
+            },
+            body: JSON.stringify(payload)
+          });
+          const newStep = await res.json();
+          this.weeklyPlan[day].push({ ...newStep, color: this.selectedMilestone.color });
+        };
+
+        if (this.selectedMilestone.metric || !repeat) {
+          await addToDay(dayName);
+        } else {
+          for (const d of this.days) await addToDay(d.name);
+        }
+
+        this.newStep[dayName] = '';
+        this.newStepValue[dayName] = null;
+        this.repeatAllDays[dayName] = false;
+      }
+    },
+
+    async removeStep(dayName, stepId) {
+      await fetch(`/api/steps/${stepId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.csrfToken
+        }
+      });
+      this.weeklyPlan[dayName] = this.weeklyPlan[dayName].filter(s => s.id !== stepId);
+    },
+
+    async toggleComplete(dayName, index, event) {
+      const step = this.weeklyPlan[dayName][index];
+      const newCompleted = event.target.checked;
+      step.completed = newCompleted;
+      const res = await fetch(`/api/steps/${step.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.csrfToken
+        },
+        body: JSON.stringify({ completed: newCompleted, title: step.title })
+      });
+      const updated = await res.json();
+      this.weeklyPlan[dayName][index].completed = updated.completed;
+    },
+
+    startDrag(dayName, index) {
+      this.dragData = { fromDay: dayName, index };
+    },
+
+    async handleDrop(targetDayName) {
+      const { fromDay, index } = this.dragData;
+      const step = this.weeklyPlan[fromDay][index];
+      const newDate = this.getDateForDay(targetDayName);
+      const res = await fetch(`/api/steps/${step.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.csrfToken
+        },
+        body: JSON.stringify({ date_for: newDate, title: step.title })
+      });
+      const updated = await res.json();
+      this.weeklyPlan[fromDay].splice(index, 1);
+      this.weeklyPlan[targetDayName].push({ ...step, date_for: newDate });
+      this.dragOverDay = null;
+    }
+  };
+}
+
+</script>
+
+
+{% endblock %}

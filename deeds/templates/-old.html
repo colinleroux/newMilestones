@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mx-auto px-4 py-6" x-data="goalPlanner" x-init="init">
+  <h1 class="text-3xl font-bold mb-6">Weekly Planner</h1>
+
+  <template x-for="goal in goals" :key="goal.id">
+    <div class="mb-8 border p-4 rounded shadow">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-xl font-semibold">Goal</h2>
+        <button class="text-red-500 hover:underline" @click="deleteGoal(goal.id)">Delete Goal</button>
+      </div>
+
+      <input type="text" class="w-full mb-2 p-2 border rounded"
+             placeholder="Goal name" x-model="goal.title" @change="updateGoal(goal)">
+      <textarea class="w-full mb-2 p-2 border rounded"
+                placeholder="Description" x-model="goal.description" @change="updateGoal(goal)"></textarea>
+      <div class="flex gap-2 mb-2">
+        <input type="text" class="flex-1 p-2 border rounded" placeholder="Metric" x-model="goal.metric" @change="updateGoal(goal)">
+        <input type="number" class="w-32 p-2 border rounded" placeholder="Target" x-model="goal.target_value" @change="updateGoal(goal)">
+      </div>
+
+      <!-- Steps -->
+      <div class="pl-4 mt-4">
+        <h3 class="text-lg font-semibold mb-2">Steps</h3>
+        <template x-for="step in goal.steps" :key="step.id">
+          <div class="mb-3 border p-2 rounded bg-gray-50">
+            <div class="flex justify-between items-center">
+              <input type="text" class="flex-1 p-1 border rounded mr-2"
+                     placeholder="Step title" x-model="step.title" @change="updateStep(step)">
+              <button class="text-sm text-red-500 hover:underline" @click="deleteStep(goal, step.id)">Delete</button>
+            </div>
+            <textarea class="w-full mt-1 p-1 border rounded"
+                      placeholder="Step description" x-model="step.description" @change="updateStep(step)"></textarea>
+          </div>
+        </template>
+        <button class="text-blue-600 text-sm hover:underline mt-2" @click="addStep(goal)">+ Add Step</button>
+      </div>
+    </div>
+  </template>
+
+  <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" @click="addGoal">+ Add New Goal</button>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('goalPlanner', () => ({
+      goals: [],
+      csrfToken: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+
+      init() {
+        this.fetchGoals();
+      },
+
+      fetchGoals() {
+        fetch('/api/goals')
+          .then(res => res.json())
+          .then(data => {
+            this.goals = data;
+          });
+      },
+
+      addGoal() {
+        const newGoal = {
+          name: 'New Goal',
+          description: '',
+          metric: '',
+          target_value: ''
+        };
+        fetch('/api/goals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfToken
+          },
+          body: JSON.stringify(newGoal)
+        })
+        .then(res => res.json())
+        .then(goal => {
+          goal.steps = [];
+          this.goals.push(goal);
+        });
+      },
+
+      updateGoal(goal) {
+        fetch(`/api/goals/${goal.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfToken
+          },
+          body: JSON.stringify(goal)
+        });
+      },
+
+      deleteGoal(goalId) {
+        fetch(`/api/goals/${goalId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': this.csrfToken
+          }
+        })
+        .then(() => {
+          this.goals = this.goals.filter(g => g.id !== goalId);
+        });
+      },
+
+      addStep(goal) {
+        const newStep = {
+          title: 'New Step',
+          description: '',
+          value: null,
+          completed: false,
+          reflection: '',
+          date_for: null
+        };
+        fetch(`/api/goals/${goal.id}/steps`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfToken
+          },
+          body: JSON.stringify(newStep)
+        })
+        .then(res => res.json())
+        .then(step => {
+          goal.steps.push(step);
+        });
+      },
+
+      updateStep(step) {
+        fetch(`/api/steps/${step.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfToken
+          },
+          body: JSON.stringify(step)
+        });
+      },
+
+      deleteStep(goal, stepId) {
+        fetch(`/api/steps/${stepId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': this.csrfToken
+          }
+        })
+        .then(() => {
+          goal.steps = goal.steps.filter(s => s.id !== stepId);
+        });
+      }
+    }))
+  });
+</script>
+
+{% endblock %}

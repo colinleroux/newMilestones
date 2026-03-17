@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block content %}
+
+  <article class="flex items-start p-4 sm:p-6 bg-white shadow-md rounded-lg mx-auto max-w-full sm:max-w-3xl">
+    <img class="w-16 h-16 rounded-full mr-4" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+    <div class="flex-1">
+      <div class="flex items-center justify-between text-gray-600 text-sm">
+        <a class="font-semibold text-teal-800" href="{{ url_for('users.user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
+        <small>{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+      </div>
+      {% if post.author == current_user %}
+        <div class="mt-2 space-x-2">
+          <a class="px-3 py-1 bg-gray-500 text-white text-sm rounded" href="{{ url_for('posts.update_post', post_id=post.id) }}">Update</a>
+          <button type="button" class="px-3 py-1 bg-red-500 text-white text-sm rounded" onclick="document.getElementById('deleteModal').classList.remove('hidden')">Delete</button>
+        </div>
+      {% endif %}
+      <h2 class="mt-2 text-xl font-bold text-gray-800">{{ post.title }}</h2>
+
+      <!-- Display Post Tags -->
+      <div class="mt-2">
+        {% if post.tags %}
+          <span class="text-gray-600 text-sm font-semibold">Tags:</span>
+          <div class="flex flex-wrap mt-1">
+            {% for tag in post.tags %}
+              <a href="{{ url_for('posts.posts_by_tag', tag_id=tag.id) }}" class="bg-teal-800 text-white text-xs font-semibold px-2 py-1 rounded mr-2">
+                {{ tag.name }}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-gray-500 text-sm">No tags</p>
+        {% endif %}
+      </div>
+
+      {% if post.image %}
+        <img src="{{ url_for('static', filename='post_images/' ~ post.image) }}" class="w-full max-h-96 object-cover rounded-lg mb-4">
+      {% endif %}
+
+      <div class="prose max-w-none">
+        {{ post.content|safe }}
+      </div>
+    </div>
+  </article>
+
+  <!-- Modal -->
+  <div id="deleteModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <h5 class="text-lg font-semibold mb-4">Delete Post?</h5>
+      <div class="flex justify-end space-x-2">
+        <button type="button" class="px-4 py-2 bg-gray-500 text-white rounded" onclick="document.getElementById('deleteModal').classList.add('hidden')">Close</button>
+        <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST">
+          <input class="px-4 py-2 bg-red-500 text-white rounded" type="submit" value="Delete">
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
