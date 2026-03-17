@@ -8,8 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
-    <script src="{{ url_for('static', filename='main.js') }}" defer></script>
+    {% for css_url in asset_css_urls('src/main.js') %}
+    <link rel="stylesheet" type="text/css" href="{{ css_url }}">
+    {% endfor %}
+    <script src="{{ asset_url('src/main.js') }}" defer></script>
     {% if title %}
         <title>deeds - {{ title }}</title>
     {% else %}
@@ -25,7 +27,6 @@
 </a>
         </div>
 
-        <!-- Desktop Menu -->
         <div class="hidden md:flex space-x-8 text-orange-600">
             <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
             <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
@@ -41,7 +42,6 @@
             {% endif %}
         </div>
 
-        <!-- Mobile menu button -->
         <div class="md:hidden">
             <button x-cloak @click="isOpen = !isOpen" type="button" class="text-state-600 dark:text-gray-200 hover:text-gray-600 dark:hover:text-gray-400 focus:outline-none" aria-label="toggle menu">
                 <svg x-show="!isOpen" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -54,12 +54,10 @@
         </div>
     </div>
 
-    <!-- Mobile Menu -->
     <div x-cloak x-show="isOpen" class="md:hidden absolute inset-x-0 bg-white dark:bg-gray-800 text-state-600">
         <div class="flex flex-col items-center py-4 space-y-4">
             <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
             <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
-
             <a class="nav-link" href="{{ url_for('posts.posts_page') }}">Blog</a>
 
             {% if current_user.is_authenticated %}
@@ -72,7 +70,6 @@
     </div>
 </nav>
 
-<!-- Tailwind Styling -->
 <style>
     .nav-link {
         @apply my-2 text-state-600 transition-colors duration-300 transform dark:text-gray-200 hover:text-gray-500 dark:hover:text-gray-500 lg:mx-4 lg:my-0;
@@ -82,7 +79,7 @@
     <main class="container mx-auto mt-6 px-6">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="w-full">
-		{% with messages = get_flashed_messages(with_categories=true) %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
             {% if category == "success" %}
@@ -119,14 +116,9 @@
               <hr class="my-6 border-gray-200 md:my-10 dark:border-gray-700" />
 
                 <div class="flex flex-wrap justify-center mt-5 -mx-4">
-                    <a href="{{ url_for('main.home') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 dark:hover:text-blue-400" aria-label="Reddit"> Home </a>
-
-                    <a href="{{ url_for('main.about') }}" class="mx-4  ttext-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="Reddit"> About </a>
-
-
-                    <a href="{{ url_for('posts.posts_page') }}" class="mx-4  text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="Reddit"> Blog </a>
-
-
+                    <a href="{{ url_for('main.home') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 dark:hover:text-blue-400" aria-label="Home"> Home </a>
+                    <a href="{{ url_for('main.about') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="About"> About </a>
+                    <a href="{{ url_for('posts.posts_page') }}" class="mx-4 text-state-600 transition-colors duration-300 hover:text-orange-600 dark:text-gray-300 hover:dark:text-gray-500" aria-label="Blog"> Blog </a>
                 </div>
 
             </div>
@@ -134,9 +126,7 @@
             <hr class="my-6 border-gray-200 md:my-10 dark:border-gray-700" />
 
             <div class="flex flex-col items-center sm:flex-row sm:justify-between">
-                <p class="text-gray-500 text-xs dark:text-gray-300">© Copyright 2025. All Rights Reserved.</p>
-
-
+                <p class="text-gray-500 text-xs dark:text-gray-300">Copyright 2025. All Rights Reserved.</p>
             </div>
         </div>
       </footer>

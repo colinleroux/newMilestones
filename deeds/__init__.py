@@ -10,6 +10,8 @@ from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 import os
 
+from deeds.assets import asset_css_urls, asset_url
+
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
@@ -41,5 +43,7 @@ def create_app(config_class=Config):
     app.register_blueprint(posts)
     app.register_blueprint(main)
     app.register_blueprint(errors)
+    app.jinja_env.globals['asset_url'] = asset_url
+    app.jinja_env.globals['asset_css_urls'] = asset_css_urls
 
     return app

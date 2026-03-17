@@ -22,8 +22,7 @@ COPY deeds ./deeds
 COPY migrations ./migrations
 COPY instance ./instance
 COPY run.py wsgi_app.py ./
-COPY --from=frontend /app/deeds/viteassets/main.css /app/deeds/static/main.css
-COPY --from=frontend /app/deeds/viteassets/main.js /app/deeds/static/main.js
+COPY --from=frontend /app/deeds/static/vite /app/deeds/static/vite
 
 EXPOSE 8000
 
