@@ -3,9 +3,9 @@
 <div x-data="dashboard()">
   <div class="grid lg:grid-cols-4 gap-4">
     <div class="lg:col-span-1">
-      <div class="mb-2 flex items-center justify-between gap-2">
+      <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 class="text-xl font-semibold" x-text="showCompletedGoals ? 'Completed goals' : 'Current goals'"></h3>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <template x-if="selectedGoalId !== null">
             <button
               class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
@@ -66,8 +66,8 @@
               goal.completed || goal.progress === 100 ? 'bg-green-100' : ''
             ].join(' ')"
           >
-            <div class="font-medium flex justify-between items-center">
-              <span x-text="goal.name"></span>
+            <div class="flex items-center justify-between gap-3 font-medium">
+              <span class="min-w-0 break-words" x-text="goal.name"></span>
               <span class="text-sm text-gray-600" x-text="goal.progress + '%'"></span>
             </div>
 
@@ -96,8 +96,8 @@
 
     <div class="lg:col-span-3">
       <div class="mb-3 p-3 rounded-lg shadow border border-gray-200">
-        <div class="flex justify-between items-center ">
-          <div class="flex space-x-2">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex flex-wrap gap-2">
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(-1)">Prev</button>
             <button class="px-3 py-1.5 text-sm bg-teal-500 text-white rounded" @click="showToday">Today</button>
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
@@ -105,15 +105,15 @@
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(1)">Next</button>
           </div>
 
-          <div class="flex space-x-3">
+          <div class="flex flex-wrap gap-2 lg:justify-end">
             <button
-              class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded"
+              class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded sm:w-auto"
               @click="window.location.href='/goalplanner'"
             >
               Goal Manager
             </button>
             <button
-              class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded"
+              class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded sm:w-auto"
               @click="window.location.href='/weeklyplanner'"
             >
               Step Manager
@@ -122,7 +122,7 @@
         </div>
       </div>
 
-      <h2 class="text-lg font-semibold mt-2 text-center" x-text="periodLabel"></h2>
+      <h2 class="mt-2 text-center text-base font-semibold sm:text-lg" x-text="periodLabel"></h2>
 
       <div
         class="mt-4 grid gap-4"
@@ -160,7 +160,7 @@
 
                     <p class="text-xs text-gray-500 mt-0.5" x-text="formatDate(step.date_for)"></p>
 
-                    <div class="flex items-center space-x-2 mt-2">
+                    <div class="mt-2 flex items-start gap-2">
                       <input
                         type="checkbox"
                         :checked="step.completed"
@@ -208,7 +208,7 @@
                               class="w-full rounded border border-gray-300 p-2 text-sm text-gray-700"
                               placeholder="How did this feel? Was it easy? Any little lessons learned?"
                             ></textarea>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                               <button
                                 type="button"
                                 class="rounded bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
