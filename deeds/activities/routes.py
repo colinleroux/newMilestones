@@ -258,11 +258,18 @@ def activity_logs():
 
     logs = logs_query.order_by(ActivityLog.logged_at.desc()).all()
     filtered_summary = summarize_logs(logs)
+    grouped_logs = []
+    if not selected_type_id:
+        grouped_map = {}
+        for log in logs:
+            grouped_map.setdefault(log.activity_type, []).append(log)
+        grouped_logs = list(grouped_map.items())
 
     return render_template(
         "activities/logs.html",
         title="Activity Logs",
         activity_logs=logs,
+        grouped_logs=grouped_logs,
         activity_types=activity_types,
         form=form,
         editing_log=editing_log,
