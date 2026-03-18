@@ -99,9 +99,14 @@
                 <div class="text-sm font-medium text-gray-500">Progress</div>
                 <div class="text-gray-800" x-text="`${selectedGoal.progress || 0}% complete`"></div>
               </div>
-              <a :href="`{{ url_for('goals.weeklyplanner') }}?goal_id=${selectedGoal.id}`" class="inline-block text-blue-600 hover:underline text-sm">
-                Plan steps for this goal
-              </a>
+              <template x-if="!selectedGoal.completed">
+                <a :href="`{{ url_for('goals.weeklyplanner') }}?goal_id=${selectedGoal.id}`" class="inline-block text-blue-600 hover:underline text-sm">
+                  Plan steps for this goal
+                </a>
+              </template>
+              <template x-if="selectedGoal.completed">
+                <p class="text-sm text-gray-500">This goal is completed, so step planning is no longer available.</p>
+              </template>
             </div>
 
             <template x-if="selectedGoal.completed">
