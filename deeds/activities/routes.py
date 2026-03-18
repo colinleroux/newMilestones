@@ -73,21 +73,18 @@ def index():
         flash(f"Quick log saved for {activity_type.name}.", "success")
         return redirect(url_for("activities.index"))
 
-    seven_days_ago = datetime.combine(date.today() - timedelta(days=6), time.min)
-    recent_logs = ActivityLog.query.filter(
-        ActivityLog.user_id == current_user.id,
-        ActivityLog.logged_at >= seven_days_ago,
-    )
-
     activity_type_count = len(activity_types)
     activity_log_count = ActivityLog.query.filter_by(user_id=current_user.id).count()
-    recent_log_count = recent_logs.count()
-    recent_logs_list = recent_logs.all()
-    recent_summary = summarize_logs(recent_logs_list)
     latest_log = (
         ActivityLog.query.filter_by(user_id=current_user.id)
         .order_by(ActivityLog.logged_at.desc())
         .first()
+    )
+    recent_five_logs = (
+        ActivityLog.query.filter_by(user_id=current_user.id)
+        .order_by(ActivityLog.logged_at.desc())
+        .limit(5)
+        .all()
     )
     week_start, week_end = current_week_range()
     month_start, month_end = current_month_range()
@@ -111,8 +108,7 @@ def index():
         quick_log_form=quick_log_form,
         activity_type_count=activity_type_count,
         activity_log_count=activity_log_count,
-        recent_log_count=recent_log_count,
-        recent_summary=recent_summary,
+        recent_five_logs=recent_five_logs,
         latest_log=latest_log,
         current_week_summary=current_week_summary,
         current_month_summary=current_month_summary,

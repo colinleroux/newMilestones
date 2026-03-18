@@ -10,6 +10,8 @@ def format_duration(seconds):
     minutes = seconds / 60
     if minutes.is_integer():
         minutes = int(minutes)
+    elif isinstance(minutes, float):
+        minutes = round(minutes, 2)
     return f"{minutes} min"
 
 
