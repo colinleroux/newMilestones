@@ -273,6 +273,7 @@ def delete_activity_log(log_id):
 @login_required
 def repeat_activity_log(log_id):
     source_log = ActivityLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
+    repeated_note_date = source_log.logged_at.strftime("%d %b %Y")
     repeated_log = ActivityLog(
         user_id=current_user.id,
         activity_type_id=source_log.activity_type_id,
@@ -283,7 +284,7 @@ def repeat_activity_log(log_id):
         weight_kg=source_log.weight_kg,
         sets=source_log.sets,
         reps=source_log.reps,
-        notes=source_log.notes,
+        notes=f"This is a repeated exercise completed on {repeated_note_date} - edit me",
     )
     db.session.add(repeated_log)
     db.session.commit()
