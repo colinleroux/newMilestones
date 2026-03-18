@@ -103,6 +103,8 @@ def index():
     )
     week_start, week_end = current_week_range()
     month_start, month_end = current_month_range()
+    year_start = date.today().replace(month=1, day=1)
+    year_end = date.today().replace(month=12, day=31)
     current_week_logs = ActivityLog.query.filter(
         ActivityLog.user_id == current_user.id,
         ActivityLog.logged_at >= datetime.combine(week_start, time.min),
@@ -113,8 +115,14 @@ def index():
         ActivityLog.logged_at >= datetime.combine(month_start, time.min),
         ActivityLog.logged_at < datetime.combine(month_end + timedelta(days=1), time.min),
     ).all()
+    current_year_logs = ActivityLog.query.filter(
+        ActivityLog.user_id == current_user.id,
+        ActivityLog.logged_at >= datetime.combine(year_start, time.min),
+        ActivityLog.logged_at < datetime.combine(year_end + timedelta(days=1), time.min),
+    ).all()
     current_week_summary = summarize_logs(current_week_logs)
     current_month_summary = summarize_logs(current_month_logs)
+    current_year_summary = summarize_logs(current_year_logs)
 
     return render_template(
         "activities/index.html",
@@ -127,6 +135,7 @@ def index():
         latest_log=latest_log,
         current_week_summary=current_week_summary,
         current_month_summary=current_month_summary,
+        current_year_summary=current_year_summary,
         format_duration=format_duration,
         format_distance=format_distance,
         format_weight=format_weight,
