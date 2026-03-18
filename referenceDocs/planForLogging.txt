@@ -1,0 +1,230 @@
+I am considering adding to our app -Activity Logging Feature 
+
+## Desired Outcome
+
+Extend the existing goal/step planning application to support **activity logging**, enabling users to:
+
+* Record real-world actions tied to their goals (e.g., workouts, runs, habits)
+* Capture structured data such as duration, distance, weight, reps, and notes
+* Review historical performance over time (weekly, monthly, yearly)
+* Gain insights into consistency, progress, and trends
+
+
+## Proposed Approach
+
+
+* Add dynamic/custom fields per activity
+* Introduce gear tracking (e.g., shoes, equipment)
+* Improve filtering and summaries
+
+perhaps later
+
+* Analytics (totals, averages, trends)
+* Charts and insights
+* Habit/streak tracking
+
+
+
+## Data Model
+
+To support flexibility across different activity types, use a **dynamic field model (Entity–Attribute–Value pattern)**.
+
+### Core Entities
+
+#### ActivityType
+
+Defines a user-created activity (e.g., Running, Bench Press)
+
+* id
+* name
+* user_id
+
+---
+
+#### ActivityField
+
+Defines the structure of an activity
+
+* id
+* activity_type_id
+* name (e.g., distance, weight, reps)
+* field_type (int, float, text, duration)
+* unit (optional: km, kg, min)
+
+---
+
+#### ActivityLog
+
+Represents a single logged activity
+
+* id
+* user_id
+* activity_type_id
+* created_at
+* notes
+* step_id (optional – links to planned step)
+* gear_id (optional)
+
+---
+
+#### ActivityLogValue
+
+Stores actual values for each field
+
+* id
+* log_id
+* field_id
+* value
+
+---
+
+### Gear Support
+
+#### Gear
+
+Allows tracking of equipment used in activities
+
+* id
+* name (e.g., Nike Pegasus, 10kg Dumbbells)
+* type (shoes, bike, weights, etc.)
+* user_id
+
+Logs can optionally reference gear:
+
+* ActivityLog.gear_id
+
+
+## UX Flow
+
+### 1. Setup (Settings Page)
+
+User configures:
+
+* Activity Types (e.g., Running)
+* Fields per activity:
+
+  * Distance (km)
+  * Duration (minutes)
+  * Weight (kg), etc.
+* Optional gear
+
+---
+
+### 2. Logging Flow
+
+User taps **➕ Add Log**
+
+1. Select Activity Type (dropdown)
+2. Dynamic form loads based on defined fields
+3. User enters values
+4. Optional:
+
+   * select gear
+   * add notes
+5. Save log
+
+Saved logs need to be able to be edited and deleted
+---
+
+### 3. Viewing Logs
+
+User can:
+
+* Filter by:
+
+  * Activity Type
+  * Date range (week/month/year)
+* View:
+
+  * List of entries
+  * Summary statistics (totals, averages)
+* Future:
+
+  * Charts and trends
+
+---
+
+## considerations
+
+### 1. Units & Normalisation
+
+Store values in a consistent base unit:
+
+* distance → meters
+* time → seconds
+
+Convert only in the UI.
+
+---
+
+### 2. Time Handling
+
+* Store timestamps in UTC
+* Convert to local time in UI
+
+---
+
+### 3. Editing & Deleting Logs
+
+Users will need to:
+
+* edit entries
+* correct mistakes
+
+Design for mutability early.
+
+---
+
+### 4. Activity Deletion
+
+If an Activity Type is deleted:
+
+* Logs should remain intact
+* Recommend soft delete strategy
+
+---
+
+### 5. Schema Evolution
+
+Avoid modifying historical data structures:
+
+* treat ActivityField as versioned if needed later
+
+---
+
+### 6. Performance Considerations
+
+EAV models can grow large.
+
+Add indexes:
+
+* (log_id)
+* (field_id)
+* (activity_type_id, created_at)
+
+---
+
+### 7. Linking Logs to Steps (not sure value or implementation without complicating ux)
+
+
+### 8. Derived Metrics
+
+Do NOT store:
+
+* pace
+* averages
+* totals
+
+Compute them dynamically to avoid inconsistencies.
+
+---
+
+### 9. UX Efficiency (Important)
+
+Support:
+
+* quick add / repeat last activity
+* sensible defaults
+* minimal input friction
+
+
