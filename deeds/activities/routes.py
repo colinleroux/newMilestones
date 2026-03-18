@@ -32,8 +32,12 @@ def _assign_log_form_defaults(form, activity_types):
 
 
 def _populate_log_from_form(log, form):
+    activity_type_id = form.activity_type_id.data
+    if activity_type_id in ("", None):
+        return None
+
     activity_type = ActivityType.query.filter_by(
-        id=form.activity_type_id.data,
+        id=int(activity_type_id),
         user_id=current_user.id,
     ).first()
     if activity_type is None:
@@ -203,13 +207,15 @@ def activity_logs():
             flash("Activity log updated.", "success")
         else:
             log = ActivityLog(user_id=current_user.id)
-            db.session.add(log)
             flash("Activity log created.", "success")
 
         activity_type = _populate_log_from_form(log, form)
         if activity_type is None:
             flash("Please choose a valid activity type.", "danger")
             return redirect(url_for("activities.activity_logs"))
+
+        if not edit_log_id or not editing_log:
+            db.session.add(log)
 
         db.session.commit()
         return redirect(url_for("activities.activity_logs"))
