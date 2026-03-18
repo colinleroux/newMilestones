@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import date, datetime, time, timedelta
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -10,17 +10,82 @@ from deeds.activities.forms import ActivityLogForm, ActivityTypeForm
 activities = Blueprint("activities", __name__, url_prefix="/activities")
 
 
-@activities.route("/")
+def _active_activity_types():
+    return (
+        ActivityType.query.filter_by(user_id=current_user.id, archived=False)
+        .order_by(ActivityType.name.asc())
+        .all()
+    )
+
+
+def _assign_log_form_defaults(form, activity_types):
+    if request.method == "GET" and activity_types and not form.activity_type_id.data:
+        form.activity_type_id.data = activity_types[0].id
+
+
+def _populate_log_from_form(log, form):
+    activity_type = ActivityType.query.filter_by(
+        id=form.activity_type_id.data,
+        user_id=current_user.id,
+    ).first()
+    if activity_type is None:
+        return None
+
+    log.activity_type_id = activity_type.id
+    log.logged_at = datetime.combine(form.logged_on.data, time.min)
+    log.duration_seconds = form.duration_seconds.data
+    log.distance_m = form.distance_m.data
+    log.weight_kg = form.weight_kg.data
+    log.reps = form.reps.data
+    log.notes = form.notes.data.strip() if form.notes.data else None
+    return activity_type
+
+
+@activities.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    activity_type_count = ActivityType.query.filter_by(user_id=current_user.id, archived=False).count()
+    activity_types = _active_activity_types()
+    quick_log_form = ActivityLogForm(prefix="quick")
+    _assign_log_form_defaults(quick_log_form, activity_types)
+
+    if quick_log_form.validate_on_submit():
+        log = ActivityLog(user_id=current_user.id)
+        activity_type = _populate_log_from_form(log, quick_log_form)
+        if activity_type is None:
+            flash("Please choose a valid activity type.", "danger")
+            return redirect(url_for("activities.index"))
+
+        db.session.add(log)
+        db.session.commit()
+        flash(f"Quick log saved for {activity_type.name}.", "success")
+        return redirect(url_for("activities.index"))
+
+    seven_days_ago = datetime.combine(date.today() - timedelta(days=6), time.min)
+    recent_logs = ActivityLog.query.filter(
+        ActivityLog.user_id == current_user.id,
+        ActivityLog.logged_at >= seven_days_ago,
+    )
+
+    activity_type_count = len(activity_types)
     activity_log_count = ActivityLog.query.filter_by(user_id=current_user.id).count()
+    recent_log_count = recent_logs.count()
+    recent_duration_seconds = sum(log.duration_seconds or 0 for log in recent_logs.all())
+    latest_log = (
+        ActivityLog.query.filter_by(user_id=current_user.id)
+        .order_by(ActivityLog.logged_at.desc())
+        .first()
+    )
 
     return render_template(
         "activities/index.html",
         title="Activities",
+        activity_types=activity_types,
+        quick_log_form=quick_log_form,
         activity_type_count=activity_type_count,
         activity_log_count=activity_log_count,
+        recent_log_count=recent_log_count,
+        recent_duration_seconds=recent_duration_seconds,
+        latest_log=latest_log,
     )
 
 
@@ -88,7 +153,8 @@ def activity_logs():
     form = ActivityLogForm()
     edit_log_id = request.args.get("edit", type=int)
     editing_log = None
-    activity_types = ActivityType.query.filter_by(user_id=current_user.id, archived=False).order_by(ActivityType.name.asc()).all()
+    activity_types = _active_activity_types()
+    _assign_log_form_defaults(form, activity_types)
 
     if edit_log_id is not None:
         editing_log = ActivityLog.query.filter_by(id=edit_log_id, user_id=current_user.id).first()
@@ -101,17 +167,7 @@ def activity_logs():
             form.reps.data = editing_log.reps
             form.notes.data = editing_log.notes
 
-    if request.method == "GET" and activity_types and not form.activity_type_id.data:
-        form.activity_type_id.data = activity_types[0].id
-
     if form.validate_on_submit():
-        activity_type = ActivityType.query.filter_by(id=form.activity_type_id.data, user_id=current_user.id).first()
-        if activity_type is None:
-            flash("Please choose a valid activity type.", "danger")
-            return redirect(url_for("activities.activity_logs"))
-
-        logged_at = datetime.combine(form.logged_on.data, time.min)
-
         if edit_log_id and editing_log:
             log = editing_log
             flash("Activity log updated.", "success")
@@ -120,22 +176,29 @@ def activity_logs():
             db.session.add(log)
             flash("Activity log created.", "success")
 
-        log.activity_type_id = activity_type.id
-        log.logged_at = logged_at
-        log.duration_seconds = form.duration_seconds.data
-        log.distance_m = form.distance_m.data
-        log.weight_kg = form.weight_kg.data
-        log.reps = form.reps.data
-        log.notes = form.notes.data.strip() if form.notes.data else None
+        activity_type = _populate_log_from_form(log, form)
+        if activity_type is None:
+            flash("Please choose a valid activity type.", "danger")
+            return redirect(url_for("activities.activity_logs"))
 
         db.session.commit()
         return redirect(url_for("activities.activity_logs"))
 
-    logs = (
-        ActivityLog.query.filter_by(user_id=current_user.id)
-        .order_by(ActivityLog.logged_at.desc())
-        .all()
-    )
+    selected_type_id = request.args.get("type_id", type=int)
+    start_date = request.args.get("start")
+    end_date = request.args.get("end")
+
+    logs_query = ActivityLog.query.filter_by(user_id=current_user.id)
+    if selected_type_id:
+        logs_query = logs_query.filter(ActivityLog.activity_type_id == selected_type_id)
+    if start_date:
+        logs_query = logs_query.filter(ActivityLog.logged_at >= datetime.fromisoformat(start_date))
+    if end_date:
+        logs_query = logs_query.filter(ActivityLog.logged_at < datetime.fromisoformat(end_date) + timedelta(days=1))
+
+    logs = logs_query.order_by(ActivityLog.logged_at.desc()).all()
+    filtered_duration_seconds = sum(log.duration_seconds or 0 for log in logs)
+
     return render_template(
         "activities/logs.html",
         title="Activity Logs",
@@ -143,6 +206,11 @@ def activity_logs():
         activity_types=activity_types,
         form=form,
         editing_log=editing_log,
+        selected_type_id=selected_type_id,
+        start_date=start_date,
+        end_date=end_date,
+        filtered_log_count=len(logs),
+        filtered_duration_seconds=filtered_duration_seconds,
     )
 
 
