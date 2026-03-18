@@ -197,7 +197,11 @@ def activity_logs():
     form = ActivityLogForm()
     edit_log_id = request.args.get("edit", type=int)
     repeat_log_id = request.args.get("repeat", type=int)
+    view_mode = request.args.get("view", "cards")
+    if view_mode not in {"cards", "list"}:
+        view_mode = "cards"
     editing_log = None
+    repeated_log = None
     activity_types = _active_activity_types()
     _assign_log_form_defaults(form, activity_types)
 
@@ -262,10 +266,12 @@ def activity_logs():
         activity_types=activity_types,
         form=form,
         editing_log=editing_log,
+        repeated_log=repeated_log,
         selected_type_id=selected_type_id,
         start_date=start_date,
         end_date=end_date,
         period=period,
+        view_mode=view_mode,
         filtered_summary=filtered_summary,
         format_duration=format_duration,
         format_distance=format_distance,
