@@ -31,6 +31,21 @@ def _assign_log_form_defaults(form, activity_types):
         form.activity_type_id.data = activity_types[0].id
 
 
+def _assign_log_form_from_log(form, activity_log, repeated=False):
+    form.logged_on.data = date.today() if repeated else activity_log.logged_at.date()
+    form.activity_type_id.data = activity_log.activity_type_id
+    form.duration_minutes.data = (activity_log.duration_seconds / 60) if activity_log.duration_seconds is not None else None
+    form.distance_km.data = (activity_log.distance_m / 1000) if activity_log.distance_m is not None else None
+    form.weight_kg.data = activity_log.weight_kg
+    form.sets.data = activity_log.sets
+    form.reps.data = activity_log.reps
+    if repeated:
+        repeated_note_date = activity_log.logged_at.strftime("%d %b %Y")
+        form.notes.data = f"This is a repeated exercise completed on {repeated_note_date} - edit me"
+    else:
+        form.notes.data = activity_log.notes
+
+
 def _populate_log_from_form(log, form):
     activity_type_id = form.activity_type_id.data
     if activity_type_id in ("", None):
@@ -181,6 +196,7 @@ def delete_activity_type(type_id):
 def activity_logs():
     form = ActivityLogForm()
     edit_log_id = request.args.get("edit", type=int)
+    repeat_log_id = request.args.get("repeat", type=int)
     editing_log = None
     activity_types = _active_activity_types()
     _assign_log_form_defaults(form, activity_types)
@@ -188,14 +204,12 @@ def activity_logs():
     if edit_log_id is not None:
         editing_log = ActivityLog.query.filter_by(id=edit_log_id, user_id=current_user.id).first()
         if editing_log and request.method == "GET":
-            form.logged_on.data = editing_log.logged_at.date()
-            form.activity_type_id.data = editing_log.activity_type_id
-            form.duration_minutes.data = (editing_log.duration_seconds / 60) if editing_log.duration_seconds is not None else None
-            form.distance_km.data = (editing_log.distance_m / 1000) if editing_log.distance_m is not None else None
-            form.weight_kg.data = editing_log.weight_kg
-            form.sets.data = editing_log.sets
-            form.reps.data = editing_log.reps
-            form.notes.data = editing_log.notes
+            _assign_log_form_from_log(form, editing_log)
+    elif repeat_log_id is not None and request.method == "GET":
+        repeated_log = ActivityLog.query.filter_by(id=repeat_log_id, user_id=current_user.id).first()
+        if repeated_log:
+            _assign_log_form_from_log(form, repeated_log, repeated=True)
+            flash("Review the repeated activity details, update the notes if needed, and save.", "info")
 
     if form.validate_on_submit():
         if edit_log_id and editing_log:
@@ -272,21 +286,5 @@ def delete_activity_log(log_id):
 @activities.route("/logs/<int:log_id>/repeat", methods=["POST"])
 @login_required
 def repeat_activity_log(log_id):
-    source_log = ActivityLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
-    repeated_note_date = source_log.logged_at.strftime("%d %b %Y")
-    repeated_log = ActivityLog(
-        user_id=current_user.id,
-        activity_type_id=source_log.activity_type_id,
-        step_id=source_log.step_id,
-        logged_at=datetime.combine(date.today(), time.min),
-        duration_seconds=source_log.duration_seconds,
-        distance_m=source_log.distance_m,
-        weight_kg=source_log.weight_kg,
-        sets=source_log.sets,
-        reps=source_log.reps,
-        notes=f"This is a repeated exercise completed on {repeated_note_date} - edit me",
-    )
-    db.session.add(repeated_log)
-    db.session.commit()
-    flash("Repeated the activity as a new log for today.", "success")
-    return redirect(url_for("activities.activity_logs"))
+    ActivityLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
+    return redirect(url_for("activities.activity_logs", repeat=log_id))
