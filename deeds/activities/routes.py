@@ -187,7 +187,7 @@ def activity_logs():
 
     if edit_log_id is not None:
         editing_log = ActivityLog.query.filter_by(id=edit_log_id, user_id=current_user.id).first()
-        if editing_log:
+        if editing_log and request.method == "GET":
             form.logged_on.data = editing_log.logged_at.date()
             form.activity_type_id.data = editing_log.activity_type_id
             form.duration_minutes.data = (editing_log.duration_seconds / 60) if editing_log.duration_seconds is not None else None
