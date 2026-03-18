@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-900">Activity Logs</h1>
+      <p class="mt-2 text-slate-600">A separate list view for logged activities, independent from the planner.</p>
+    </div>
+    <a href="{{ url_for('activities.index') }}" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+      Back to Activities
+    </a>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    {% if activity_logs %}
+      <ul class="space-y-3">
+        {% for log in activity_logs %}
+          <li class="rounded-xl border border-slate-100 px-4 py-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div class="font-medium text-slate-900">{{ log.activity_type.name }}</div>
+                <div class="mt-1 text-sm text-slate-600">
+                  {{ log.logged_at.strftime('%d %b %Y %H:%M') }}
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs text-slate-600">
+                {% if log.duration_seconds %}
+                  <span class="rounded-full bg-slate-100 px-2 py-1">{{ log.duration_seconds }} sec</span>
+                {% endif %}
+                {% if log.distance_m %}
+                  <span class="rounded-full bg-slate-100 px-2 py-1">{{ log.distance_m }} m</span>
+                {% endif %}
+                {% if log.weight_kg %}
+                  <span class="rounded-full bg-slate-100 px-2 py-1">{{ log.weight_kg }} kg</span>
+                {% endif %}
+                {% if log.reps %}
+                  <span class="rounded-full bg-slate-100 px-2 py-1">{{ log.reps }} reps</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if log.notes %}
+              <p class="mt-3 whitespace-pre-line text-sm text-slate-600">{{ log.notes }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="rounded-2xl bg-slate-50 p-6 text-sm text-slate-600">
+        No logs yet. A create/edit/delete flow can be layered onto this blueprint next.
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

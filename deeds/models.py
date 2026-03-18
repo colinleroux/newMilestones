@@ -105,3 +105,32 @@ class Step(db.Model):
 
     def __repr__(self):
         return f"<Step {self.id}: {self.title} (Goal {self.goal_id})>"
+
+
+class ActivityType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    archived = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    logs = db.relationship("ActivityLog", backref="activity_type", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<ActivityType {self.id}: {self.name}>"
+
+
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    activity_type_id = db.Column(db.Integer, db.ForeignKey('activity_type.id'), nullable=False)
+    step_id = db.Column(db.Integer, db.ForeignKey('step.id'), nullable=True)
+    logged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    duration_seconds = db.Column(db.Integer, nullable=True)
+    distance_m = db.Column(db.Float, nullable=True)
+    weight_kg = db.Column(db.Float, nullable=True)
+    reps = db.Column(db.Integer, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f"<ActivityLog {self.id}: type={self.activity_type_id} user={self.user_id}>"

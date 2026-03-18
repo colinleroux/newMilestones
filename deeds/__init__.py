@@ -34,11 +34,13 @@ def create_app(config_class=Config):
 
 
     from deeds.users.routes import users
+    from deeds.activities.routes import activities
     from deeds.posts.routes import posts
     from deeds.main.routes import main
     from deeds.goals.routes import goals
     from deeds.errors.handlers import errors
     app.register_blueprint(users)
+    app.register_blueprint(activities)
     app.register_blueprint(goals)
     app.register_blueprint(posts)
     app.register_blueprint(main)
