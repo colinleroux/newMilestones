@@ -129,6 +129,7 @@ class ActivityLog(db.Model):
     duration_seconds = db.Column(db.Integer, nullable=True)
     distance_m = db.Column(db.Float, nullable=True)
     weight_kg = db.Column(db.Float, nullable=True)
+    sets = db.Column(db.Integer, nullable=True)
     reps = db.Column(db.Integer, nullable=True)
     notes = db.Column(db.Text, nullable=True)
 

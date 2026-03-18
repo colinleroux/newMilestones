@@ -6,6 +6,14 @@ from flask_login import current_user, login_required
 from deeds.models import ActivityLog, ActivityType
 from deeds import db
 from deeds.activities.forms import ActivityLogForm, ActivityTypeForm
+from deeds.activities.utils import (
+    current_month_range,
+    current_week_range,
+    format_distance,
+    format_duration,
+    format_weight,
+    summarize_logs,
+)
 
 activities = Blueprint("activities", __name__, url_prefix="/activities")
 
@@ -33,9 +41,10 @@ def _populate_log_from_form(log, form):
 
     log.activity_type_id = activity_type.id
     log.logged_at = datetime.combine(form.logged_on.data, time.min)
-    log.duration_seconds = form.duration_seconds.data
-    log.distance_m = form.distance_m.data
+    log.duration_seconds = int(form.duration_minutes.data * 60) if form.duration_minutes.data is not None else None
+    log.distance_m = float(form.distance_km.data * 1000) if form.distance_km.data is not None else None
     log.weight_kg = form.weight_kg.data
+    log.sets = form.sets.data
     log.reps = form.reps.data
     log.notes = form.notes.data.strip() if form.notes.data else None
     return activity_type
@@ -69,12 +78,27 @@ def index():
     activity_type_count = len(activity_types)
     activity_log_count = ActivityLog.query.filter_by(user_id=current_user.id).count()
     recent_log_count = recent_logs.count()
-    recent_duration_seconds = sum(log.duration_seconds or 0 for log in recent_logs.all())
+    recent_logs_list = recent_logs.all()
+    recent_summary = summarize_logs(recent_logs_list)
     latest_log = (
         ActivityLog.query.filter_by(user_id=current_user.id)
         .order_by(ActivityLog.logged_at.desc())
         .first()
     )
+    week_start, week_end = current_week_range()
+    month_start, month_end = current_month_range()
+    current_week_logs = ActivityLog.query.filter(
+        ActivityLog.user_id == current_user.id,
+        ActivityLog.logged_at >= datetime.combine(week_start, time.min),
+        ActivityLog.logged_at < datetime.combine(week_end + timedelta(days=1), time.min),
+    ).all()
+    current_month_logs = ActivityLog.query.filter(
+        ActivityLog.user_id == current_user.id,
+        ActivityLog.logged_at >= datetime.combine(month_start, time.min),
+        ActivityLog.logged_at < datetime.combine(month_end + timedelta(days=1), time.min),
+    ).all()
+    current_week_summary = summarize_logs(current_week_logs)
+    current_month_summary = summarize_logs(current_month_logs)
 
     return render_template(
         "activities/index.html",
@@ -84,8 +108,13 @@ def index():
         activity_type_count=activity_type_count,
         activity_log_count=activity_log_count,
         recent_log_count=recent_log_count,
-        recent_duration_seconds=recent_duration_seconds,
+        recent_summary=recent_summary,
         latest_log=latest_log,
+        current_week_summary=current_week_summary,
+        current_month_summary=current_month_summary,
+        format_duration=format_duration,
+        format_distance=format_distance,
+        format_weight=format_weight,
     )
 
 
@@ -161,9 +190,10 @@ def activity_logs():
         if editing_log:
             form.logged_on.data = editing_log.logged_at.date()
             form.activity_type_id.data = editing_log.activity_type_id
-            form.duration_seconds.data = editing_log.duration_seconds
-            form.distance_m.data = editing_log.distance_m
+            form.duration_minutes.data = (editing_log.duration_seconds / 60) if editing_log.duration_seconds is not None else None
+            form.distance_km.data = (editing_log.distance_m / 1000) if editing_log.distance_m is not None else None
             form.weight_kg.data = editing_log.weight_kg
+            form.sets.data = editing_log.sets
             form.reps.data = editing_log.reps
             form.notes.data = editing_log.notes
 
@@ -187,6 +217,16 @@ def activity_logs():
     selected_type_id = request.args.get("type_id", type=int)
     start_date = request.args.get("start")
     end_date = request.args.get("end")
+    period = request.args.get("period", "")
+
+    if period == "week" and not start_date and not end_date:
+        week_start, week_end = current_week_range()
+        start_date = week_start.isoformat()
+        end_date = week_end.isoformat()
+    elif period == "month" and not start_date and not end_date:
+        month_start, month_end = current_month_range()
+        start_date = month_start.isoformat()
+        end_date = month_end.isoformat()
 
     logs_query = ActivityLog.query.filter_by(user_id=current_user.id)
     if selected_type_id:
@@ -197,7 +237,7 @@ def activity_logs():
         logs_query = logs_query.filter(ActivityLog.logged_at < datetime.fromisoformat(end_date) + timedelta(days=1))
 
     logs = logs_query.order_by(ActivityLog.logged_at.desc()).all()
-    filtered_duration_seconds = sum(log.duration_seconds or 0 for log in logs)
+    filtered_summary = summarize_logs(logs)
 
     return render_template(
         "activities/logs.html",
@@ -209,8 +249,11 @@ def activity_logs():
         selected_type_id=selected_type_id,
         start_date=start_date,
         end_date=end_date,
-        filtered_log_count=len(logs),
-        filtered_duration_seconds=filtered_duration_seconds,
+        period=period,
+        filtered_summary=filtered_summary,
+        format_duration=format_duration,
+        format_distance=format_distance,
+        format_weight=format_weight,
     )
 
 
@@ -221,4 +264,26 @@ def delete_activity_log(log_id):
     db.session.delete(activity_log)
     db.session.commit()
     flash("Activity log deleted.", "success")
+    return redirect(url_for("activities.activity_logs"))
+
+
+@activities.route("/logs/<int:log_id>/repeat", methods=["POST"])
+@login_required
+def repeat_activity_log(log_id):
+    source_log = ActivityLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
+    repeated_log = ActivityLog(
+        user_id=current_user.id,
+        activity_type_id=source_log.activity_type_id,
+        step_id=source_log.step_id,
+        logged_at=datetime.combine(date.today(), time.min),
+        duration_seconds=source_log.duration_seconds,
+        distance_m=source_log.distance_m,
+        weight_kg=source_log.weight_kg,
+        sets=source_log.sets,
+        reps=source_log.reps,
+        notes=source_log.notes,
+    )
+    db.session.add(repeated_log)
+    db.session.commit()
+    flash("Repeated the activity as a new log for today.", "success")
     return redirect(url_for("activities.activity_logs"))

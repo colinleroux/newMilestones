@@ -13,9 +13,10 @@ class ActivityTypeForm(FlaskForm):
 class ActivityLogForm(FlaskForm):
     logged_on = DateField("Log Date", validators=[DataRequired()], default=date.today)
     activity_type_id = IntegerField("Activity Type", validators=[DataRequired()])
-    duration_seconds = IntegerField("Duration (seconds)", validators=[Optional(), NumberRange(min=0)])
-    distance_m = FloatField("Distance (meters)", validators=[Optional(), NumberRange(min=0)])
+    duration_minutes = FloatField("Duration (minutes)", validators=[Optional(), NumberRange(min=0)])
+    distance_km = FloatField("Distance (km)", validators=[Optional(), NumberRange(min=0)])
     weight_kg = FloatField("Weight (kg)", validators=[Optional(), NumberRange(min=0)])
+    sets = IntegerField("Sets", validators=[Optional(), NumberRange(min=0)])
     reps = IntegerField("Reps", validators=[Optional(), NumberRange(min=0)])
     notes = TextAreaField("Notes", validators=[Optional(), Length(max=2000)])
     submit = SubmitField("Save Log")
