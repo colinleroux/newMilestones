@@ -105,7 +105,13 @@
                 </a>
               </template>
               <template x-if="selectedGoal.completed">
-                <p class="text-sm text-gray-500">This goal is completed, so step planning is no longer available.</p>
+                <div class="flex flex-col gap-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+                  <p>This goal is completed. To add more steps, mark it as not achieved.</p>
+                  <label class="flex items-center gap-2 text-sm font-medium text-green-700 cursor-pointer">
+                    <input type="checkbox" checked @change="markGoalIncomplete(selectedGoal)" class="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded">
+                    <span>Achieved</span>
+                  </label>
+                </div>
               </template>
             </div>
 
