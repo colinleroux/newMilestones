@@ -131,7 +131,8 @@ def planner_home():
 @goals.route('/goalplanner')
 @login_required
 def goal_planner():
-    return render_template('goalplanner.html')
+    initial_goal_name = request.args.get("name", "").strip()
+    return render_template('goalplanner.html', initial_goal_name=initial_goal_name)
 
 
 # -------------------- Goal Routes --------------------

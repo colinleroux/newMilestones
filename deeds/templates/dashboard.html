@@ -366,6 +366,7 @@
                   <p class="mt-1 text-xs uppercase tracking-wide text-violet-700">Contemplated item</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
+                  <button type="button" class="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700" @click="convertIdeaToGoal(selectedIdea)">Convert to goal</button>
                   <button type="button" class="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600" @click="editIdea(selectedIdea)">Edit</button>
                   <button type="button" class="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600" @click="deleteIdea(selectedIdea)">Delete</button>
                 </div>
@@ -575,6 +576,11 @@ function dashboard() {
         console.error(err);
         alert('Could not delete contemplated item.');
       }
+    },
+
+    convertIdeaToGoal(idea) {
+      const encodedName = encodeURIComponent(idea.title || '');
+      window.location.href = `/goalplanner?name=${encodedName}`;
     },
 
     async markGoalCompleted(goal) {

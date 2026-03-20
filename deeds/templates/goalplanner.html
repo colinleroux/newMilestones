@@ -179,11 +179,15 @@ function goalPage() {
     selectedGoal: null,
     addingGoal: false,
     editingGoal: false,
+    initialGoalName: {{ initial_goal_name | tojson }},
     goalForm: { id: null, name: '', color: '', motivation: '' },
     availableColors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
 
     async init() {
       await this.fetchGoals();
+      if (this.initialGoalName) {
+        this.startAddGoal(this.initialGoalName);
+      }
     },
 
     async fetchGoals() {
@@ -234,10 +238,14 @@ function goalPage() {
       });
     },
 
-    startAddGoal() {
+    startAddGoal(prefilledName = '') {
       this.selectedGoal = null;
       this.resetGoalForm();
       this.addingGoal = true;
+      this.goalForm.name = prefilledName;
+      if (!this.goalForm.color) {
+        this.goalForm.color = this.availableColors[0];
+      }
     },
 
     editGoal(goal) {
