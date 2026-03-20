@@ -46,6 +46,8 @@ def _apply_step_activity_fields(step, data):
     step.sets = int(data["sets"]) if data.get("sets") not in (None, "") else None
     step.reps = int(data["reps"]) if data.get("reps") not in (None, "") else None
     step.activity_notes = data.get("activity_notes", step.activity_notes)
+    if isinstance(step.activity_notes, str):
+        step.activity_notes = step.activity_notes.strip() or None
     if not step.log_activity:
         step.duration_seconds = None
         step.distance_m = None
@@ -204,6 +206,9 @@ def delete_goal(goal_id):
     if goal.user_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
 
+    step_ids = [step.id for step in goal.steps]
+    if step_ids:
+        ActivityLog.query.filter(ActivityLog.step_id.in_(step_ids)).update({"step_id": None}, synchronize_session=False)
     db.session.delete(goal)
     db.session.commit()
     return jsonify({"message": "Goal and related steps deleted"})
@@ -215,6 +220,12 @@ def api_get_goals_with_steps():
     user_goals = Goal.query.filter_by(user_id=current_user.id).all()
 
     def serialize_goal(g):
+        logged_activity_map = {
+            step_id: log_id
+            for step_id, log_id in db.session.query(ActivityLog.step_id, ActivityLog.id)
+            .filter(ActivityLog.step_id.isnot(None), ActivityLog.user_id == current_user.id)
+            .all()
+        }
         return {
             "id": g.id,
             "name": g.name,
@@ -230,7 +241,7 @@ def api_get_goals_with_steps():
                     "completed_at": step.completed_at.isoformat() if step.completed_at else None,
                     "date_for": step.date_for.isoformat() if step.date_for else None,
                     "reflection": step.reflection,
-                    "logged_activity_id": ActivityLog.query.filter_by(step_id=step.id).order_by(ActivityLog.logged_at.desc()).first().id if ActivityLog.query.filter_by(step_id=step.id).first() else None,
+                    "logged_activity_id": logged_activity_map.get(step.id),
                 }
                 for step in sorted(
                     [step for step in g.steps if step.completed],
