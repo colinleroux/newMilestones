@@ -17,6 +17,17 @@ from deeds.activities.utils import (
 
 activities = Blueprint("activities", __name__, url_prefix="/activities")
 
+ACTIVITY_COLORS = [
+    "#0f766e",
+    "#0369a1",
+    "#7c3aed",
+    "#db2777",
+    "#ea580c",
+    "#ca8a04",
+    "#65a30d",
+    "#dc2626",
+]
+
 
 def _active_activity_types():
     return (
@@ -26,13 +37,29 @@ def _active_activity_types():
     )
 
 
+def _next_available_activity_color(exclude_type_id=None):
+    used_colors = {
+        activity_type.color
+        for activity_type in ActivityType.query.filter_by(user_id=current_user.id).all()
+        if exclude_type_id is None or activity_type.id != exclude_type_id
+    }
+    for color in ACTIVITY_COLORS:
+        if color not in used_colors:
+            return color
+    return ACTIVITY_COLORS[0]
+
+
 def _ensure_general_activity_type():
     activity_type = ActivityType.query.filter_by(
         user_id=current_user.id,
         name="General",
     ).first()
     if activity_type is None:
-        activity_type = ActivityType(name="General", user_id=current_user.id)
+        activity_type = ActivityType(
+            name="General",
+            user_id=current_user.id,
+            color=_next_available_activity_color(),
+        )
         db.session.add(activity_type)
         db.session.commit()
     elif activity_type.archived:
@@ -180,13 +207,21 @@ def activity_types():
         editing_type = ActivityType.query.filter_by(id=edit_type_id, user_id=current_user.id).first()
         if editing_type:
             form.name.data = editing_type.name
+            form.color.data = editing_type.color
+    elif request.method == "GET" and not form.color.data:
+        form.color.data = _next_available_activity_color()
 
     if form.validate_on_submit():
         if edit_type_id and editing_type:
             editing_type.name = form.name.data.strip()
+            editing_type.color = form.color.data
             flash("Activity type updated.", "success")
         else:
-            new_type = ActivityType(name=form.name.data.strip(), user_id=current_user.id)
+            new_type = ActivityType(
+                name=form.name.data.strip(),
+                color=form.color.data,
+                user_id=current_user.id,
+            )
             db.session.add(new_type)
             flash("Activity type created.", "success")
 
@@ -200,6 +235,12 @@ def activity_types():
         activity_types=types,
         form=form,
         editing_type=editing_type,
+        activity_colors=ACTIVITY_COLORS,
+        used_colors=[
+            activity_type.color
+            for activity_type in types
+            if not editing_type or activity_type.id != editing_type.id
+        ],
     )
 
 

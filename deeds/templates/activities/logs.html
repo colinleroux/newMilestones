@@ -183,8 +183,11 @@
         <div class="space-y-5">
           {% for group_type, group_logs in logs_to_render %}
             {% if group_type %}
-              <div class="rounded-2xl bg-gradient-to-r from-teal-50 to-orange-50 px-4 py-3">
-                <h3 class="text-base font-semibold text-slate-900">{{ group_type.name }}</h3>
+              <div class="rounded-2xl bg-white px-4 py-3 shadow-sm" style="border-left: 10px solid {{ group_type.color }};">
+                <div class="flex items-center gap-3">
+                  <span class="inline-block h-4 w-4 rounded-full" style="background-color: {{ group_type.color }};"></span>
+                  <h3 class="text-base font-semibold text-slate-900">{{ group_type.name }}</h3>
+                </div>
                 <p class="mt-1 text-sm text-slate-600">{{ group_logs|length }} log{{ '' if group_logs|length == 1 else 's' }}</p>
               </div>
             {% endif %}
@@ -197,11 +200,14 @@
                 </div>
                 <ul class="divide-y divide-slate-200">
                   {% for log in group_logs %}
-                    <li class="grid gap-3 px-4 py-4 sm:grid-cols-[0.8fr_2fr_auto] sm:items-start">
+                    <li class="grid gap-3 px-4 py-4 sm:grid-cols-[0.8fr_2fr_auto] sm:items-start" style="border-left: 8px solid {{ log.activity_type.color }};">
                       <div class="text-sm text-slate-600">{{ log.logged_at.strftime('%d %b %Y') }}</div>
                       <div class="space-y-2">
                         {% if not group_type %}
-                          <div class="font-medium text-slate-900">{{ log.activity_type.name }}</div>
+                          <div class="flex items-center gap-3">
+                            <span class="inline-block h-4 w-4 rounded-full" style="background-color: {{ log.activity_type.color }};"></span>
+                            <div class="font-medium text-slate-900">{{ log.activity_type.name }}</div>
+                          </div>
                         {% endif %}
                         <div class="flex flex-wrap gap-2 text-xs text-slate-600">
                           {% if format_duration(log.duration_seconds) %}
@@ -262,11 +268,14 @@
             {% else %}
               <ul class="space-y-3">
                 {% for log in group_logs %}
-                  <li class="rounded-xl border border-slate-100 px-4 py-4">
+                  <li class="rounded-xl border border-slate-100 bg-white px-4 py-4 shadow-sm" style="border-left: 10px solid {{ log.activity_type.color }};">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         {% if not group_type %}
-                          <div class="font-medium text-slate-900">{{ log.activity_type.name }}</div>
+                          <div class="flex items-center gap-3">
+                            <span class="inline-block h-4 w-4 rounded-full" style="background-color: {{ log.activity_type.color }};"></span>
+                            <div class="font-medium text-slate-900">{{ log.activity_type.name }}</div>
+                          </div>
                         {% endif %}
                         <div class="text-sm text-slate-600 {% if not group_type %}mt-1{% endif %}">
                           {{ log.logged_at.strftime('%d %b %Y') }}

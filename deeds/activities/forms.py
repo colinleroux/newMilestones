@@ -7,6 +7,7 @@ from wtforms.validators import DataRequired, Length, NumberRange, Optional
 
 class ActivityTypeForm(FlaskForm):
     name = StringField("Activity Name", validators=[DataRequired(), Length(min=2, max=100)])
+    color = StringField("Color", validators=[DataRequired(), Length(min=4, max=20)])
     submit = SubmitField("Save Activity Type")
 
 

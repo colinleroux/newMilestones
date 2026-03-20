@@ -24,6 +24,33 @@
             <p class="mt-1 text-sm text-red-600">{{ error }}</p>
           {% endfor %}
         </div>
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Choose a color</label>
+          <div class="flex flex-wrap gap-3">
+            {% for color in activity_colors %}
+              {% set is_used = color in used_colors %}
+              <label class="relative {% if is_used and form.color.data != color %}opacity-30{% endif %}">
+                <input
+                  type="radio"
+                  name="{{ form.color.name }}"
+                  value="{{ color }}"
+                  class="peer sr-only"
+                  {% if form.color.data == color %}checked{% endif %}
+                  {% if is_used and form.color.data != color %}disabled{% endif %}
+                >
+                <span
+                  class="block h-10 w-10 rounded-full border-4 border-transparent shadow transition peer-checked:scale-110 peer-checked:border-slate-900"
+                  style="background-color: {{ color }};"
+                  title="{% if is_used and form.color.data != color %}Already in use{% else %}Select color{% endif %}"
+                ></span>
+              </label>
+            {% endfor %}
+          </div>
+          <p class="mt-2 text-xs text-slate-500">Used colors are dimmed so each activity can keep its own identity.</p>
+          {% for error in form.color.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
         <div class="flex flex-wrap gap-2">
           {{ form.submit(class="rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600") }}
           {% if editing_type %}
@@ -43,10 +70,13 @@
       {% if activity_types %}
         <ul class="space-y-3">
           {% for activity_type in activity_types %}
-            <li class="rounded-xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+            <li class="rounded-xl border border-slate-100 bg-white px-4 py-4 shadow-sm" style="border-left: 10px solid {{ activity_type.color }};">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div class="font-medium text-slate-900">{{ activity_type.name }}</div>
+                  <div class="flex items-center gap-3">
+                    <span class="inline-block h-4 w-4 rounded-full" style="background-color: {{ activity_type.color }};"></span>
+                    <div class="font-medium text-slate-900">{{ activity_type.name }}</div>
+                  </div>
                   {% if activity_type.archived %}
                     <span class="mt-2 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">Archived</span>
                   {% endif %}
