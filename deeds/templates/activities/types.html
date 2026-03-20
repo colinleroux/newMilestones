@@ -13,7 +13,7 @@
   </div>
 
   <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-    <div class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+    <div class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm" x-data="{ selectedColor: '{{ form.color.data or activity_colors[0] }}' }">
       <h2 class="text-xl font-semibold text-slate-900">{{ 'Edit activity type' if editing_type else 'Add activity type' }}</h2>
       <form method="POST" class="mt-4 space-y-4">
         {{ form.hidden_tag() }}
@@ -26,24 +26,19 @@
         </div>
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">Choose a color</label>
+          <input type="hidden" name="{{ form.color.name }}" :value="selectedColor">
           <div class="flex flex-wrap gap-3">
             {% for color in activity_colors %}
               {% set is_used = color in used_colors %}
-              <label class="relative {% if is_used and form.color.data != color %}opacity-30{% endif %}">
-                <input
-                  type="radio"
-                  name="{{ form.color.name }}"
-                  value="{{ color }}"
-                  class="peer sr-only"
-                  {% if form.color.data == color %}checked{% endif %}
-                  {% if is_used and form.color.data != color %}disabled{% endif %}
-                >
-                <span
-                  class="block h-10 w-10 rounded-full border-4 border-transparent shadow transition peer-checked:scale-110 peer-checked:border-slate-900"
-                  style="background-color: {{ color }};"
-                  title="{% if is_used and form.color.data != color %}Already in use{% else %}Select color{% endif %}"
-                ></span>
-              </label>
+              <button
+                type="button"
+                class="relative h-10 w-10 rounded-full border-4 shadow transition"
+                :class="selectedColor === '{{ color }}' ? 'scale-110 border-slate-900' : 'border-transparent'"
+                style="background-color: {{ color }};"
+                title="{% if is_used and form.color.data != color %}Already in use{% else %}Select color{% endif %}"
+                {% if is_used and form.color.data != color %}disabled{% endif %}
+                @click="selectedColor = '{{ color }}'"
+              ></button>
             {% endfor %}
           </div>
           <p class="mt-2 text-xs text-slate-500">Used colors are dimmed so each activity can keep its own identity.</p>
