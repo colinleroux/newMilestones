@@ -205,7 +205,7 @@ def activity_types():
 
     if edit_type_id is not None:
         editing_type = ActivityType.query.filter_by(id=edit_type_id, user_id=current_user.id).first()
-        if editing_type:
+        if editing_type and request.method == "GET":
             form.name.data = editing_type.name
             form.color.data = editing_type.color
     elif request.method == "GET" and not form.color.data:
