@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from deeds.models import ActivityLog, ActivityType
+from deeds.models import ActivityLog, ActivityType, Step
 from deeds import db
 from deeds.activities.forms import ActivityLogForm, ActivityTypeForm
 from deeds.activities.utils import (
@@ -26,6 +26,19 @@ def _active_activity_types():
     )
 
 
+def _ensure_general_activity_type():
+    activity_type = ActivityType.query.filter_by(
+        user_id=current_user.id,
+        archived=False,
+        name="General",
+    ).first()
+    if activity_type is None:
+        activity_type = ActivityType(name="General", user_id=current_user.id)
+        db.session.add(activity_type)
+        db.session.flush()
+    return activity_type
+
+
 def _assign_log_form_defaults(form, activity_types):
     if request.method == "GET" and activity_types and not form.activity_type_id.data:
         form.activity_type_id.data = activity_types[0].id
@@ -44,6 +57,18 @@ def _assign_log_form_from_log(form, activity_log, repeated=False):
         form.notes.data = f"This is a repeated exercise completed on {repeated_note_date} - edit me"
     else:
         form.notes.data = activity_log.notes
+
+
+def _assign_log_form_from_step(form, step):
+    general_type = _ensure_general_activity_type()
+    form.logged_on.data = step.completed_at.date() if step.completed_at else (step.date_for or date.today())
+    form.activity_type_id.data = step.activity_type_id or general_type.id
+    form.duration_minutes.data = (step.duration_seconds / 60) if step.duration_seconds is not None else None
+    form.distance_km.data = (step.distance_m / 1000) if step.distance_m is not None else None
+    form.weight_kg.data = step.weight_kg
+    form.sets.data = step.sets
+    form.reps.data = step.reps
+    form.notes.data = step.activity_notes or f"Completed step: {step.title}"
 
 
 def _populate_log_from_form(log, form):
@@ -206,11 +231,13 @@ def activity_logs():
     form = ActivityLogForm()
     edit_log_id = request.args.get("edit", type=int)
     repeat_log_id = request.args.get("repeat", type=int)
+    step_id = request.args.get("step_id", type=int)
     view_mode = request.args.get("view", "cards")
     if view_mode not in {"cards", "list"}:
         view_mode = "cards"
     editing_log = None
     repeated_log = None
+    source_step = None
     activity_types = _active_activity_types()
     _assign_log_form_defaults(form, activity_types)
 
@@ -223,6 +250,15 @@ def activity_logs():
         if repeated_log:
             _assign_log_form_from_log(form, repeated_log, repeated=True)
             flash("Review the repeated activity details, update the notes if needed, and save.", "info")
+    elif step_id is not None and request.method == "GET":
+        source_step = Step.query.join(Step.goal).filter(
+            Step.id == step_id,
+            Step.goal.has(user_id=current_user.id),
+        ).first()
+        if source_step:
+            _assign_log_form_from_step(form, source_step)
+            activity_types = _active_activity_types()
+            flash("Your completed step has been pre-filled into the log form. Review the details and save when ready.", "info")
 
     if form.validate_on_submit():
         if edit_log_id and editing_log:
@@ -236,6 +272,14 @@ def activity_logs():
         if activity_type is None:
             flash("Please choose a valid activity type.", "danger")
             return redirect(url_for("activities.activity_logs"))
+
+        if step_id and not edit_log_id:
+            source_step = Step.query.join(Step.goal).filter(
+                Step.id == step_id,
+                Step.goal.has(user_id=current_user.id),
+            ).first()
+            if source_step:
+                log.step_id = source_step.id
 
         if not edit_log_id or not editing_log:
             db.session.add(log)
@@ -283,6 +327,7 @@ def activity_logs():
         form=form,
         editing_log=editing_log,
         repeated_log=repeated_log,
+        source_step=source_step,
         selected_type_id=selected_type_id,
         start_date=start_date,
         end_date=end_date,
