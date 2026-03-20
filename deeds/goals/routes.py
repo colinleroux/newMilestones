@@ -227,14 +227,14 @@ def delete_goal(goal_id):
 @login_required
 def api_get_goals_with_steps():
     user_goals = Goal.query.filter_by(user_id=current_user.id).all()
+    logged_activity_map = {
+        step_id: log_id
+        for step_id, log_id in db.session.query(ActivityLog.step_id, ActivityLog.id)
+        .filter(ActivityLog.step_id.isnot(None), ActivityLog.user_id == current_user.id)
+        .all()
+    }
 
     def serialize_goal(g):
-        logged_activity_map = {
-            step_id: log_id
-            for step_id, log_id in db.session.query(ActivityLog.step_id, ActivityLog.id)
-            .filter(ActivityLog.step_id.isnot(None), ActivityLog.user_id == current_user.id)
-            .all()
-        }
         return {
             "id": g.id,
             "name": g.name,

@@ -159,6 +159,23 @@
                     </p>
 
                     <p class="text-xs text-gray-500 mt-0.5" x-text="formatDate(step.date_for)"></p>
+                    <template x-if="step.log_activity">
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                        <span class="rounded-full bg-teal-50 px-2 py-1 text-teal-700">Tracked activity</span>
+                        <template x-if="step.duration_seconds">
+                          <span class="rounded-full bg-slate-100 px-2 py-1" x-text="formatDuration(step.duration_seconds)"></span>
+                        </template>
+                        <template x-if="step.distance_m">
+                          <span class="rounded-full bg-slate-100 px-2 py-1" x-text="formatDistance(step.distance_m)"></span>
+                        </template>
+                        <template x-if="step.sets">
+                          <span class="rounded-full bg-slate-100 px-2 py-1" x-text="`${step.sets} sets`"></span>
+                        </template>
+                        <template x-if="step.reps">
+                          <span class="rounded-full bg-slate-100 px-2 py-1" x-text="`${step.reps} reps`"></span>
+                        </template>
+                      </div>
+                    </template>
 
                     <div class="mt-2 flex items-start gap-2">
                       <input
@@ -172,7 +189,7 @@
 
                     <template x-if="step.completed">
                       <div class="mt-3 rounded border border-green-100 bg-white/80 p-3">
-                        <div class="flex items-start justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
                           <template x-if="!step.reflection">
                             <button
                               type="button"
@@ -193,6 +210,24 @@
                             >
                               <span class="text-sm">✎</span>
                             </button>
+                          </template>
+
+                          <template x-if="step.log_activity && !step.logged_activity_id">
+                            <a
+                              :href="`/activities/logs?step_id=${step.id}`"
+                              class="text-sm font-medium text-teal-700 hover:underline"
+                            >
+                              Add to log
+                            </a>
+                          </template>
+
+                          <template x-if="step.logged_activity_id">
+                            <a
+                              :href="`/activities/logs?edit=${step.logged_activity_id}`"
+                              class="text-sm font-medium text-teal-700 hover:underline"
+                            >
+                              View log
+                            </a>
                           </template>
                         </div>
 
@@ -471,6 +506,17 @@ function dashboard() {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
       const [year, month, day] = dateStr.split('-').map(Number);
       return new Date(year, month - 1, day).toLocaleDateString(undefined, options);
+    },
+
+    formatDuration(seconds) {
+      if (!seconds) return '';
+      const minutes = seconds / 60;
+      return `${Number(minutes.toFixed(2)).toString()} min`;
+    },
+
+    formatDistance(distanceM) {
+      if (!distanceM) return '';
+      return `${Number((distanceM / 1000).toFixed(2)).toString()} km`;
     },
 
     formatMonthYear(dateStr) {

@@ -251,7 +251,7 @@ def activity_logs():
             _assign_log_form_from_log(form, repeated_log, repeated=True)
             flash("Review the repeated activity details, update the notes if needed, and save.", "info")
     elif step_id is not None and request.method == "GET":
-        source_step = Step.query.join(Step.goal).filter(
+        source_step = Step.query.filter(
             Step.id == step_id,
             Step.goal.has(user_id=current_user.id),
         ).first()
@@ -274,7 +274,7 @@ def activity_logs():
             return redirect(url_for("activities.activity_logs"))
 
         if step_id and not edit_log_id:
-            source_step = Step.query.join(Step.goal).filter(
+            source_step = Step.query.filter(
                 Step.id == step_id,
                 Step.goal.has(user_id=current_user.id),
             ).first()

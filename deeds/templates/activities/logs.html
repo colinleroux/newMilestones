@@ -67,6 +67,8 @@
       <h2 class="text-xl font-semibold text-slate-900">
         {% if editing_log %}
           Edit log
+        {% elif source_step %}
+          Review and save completed step activity
         {% elif repeated_log %}
           Review and save repeated activity
         {% else %}
