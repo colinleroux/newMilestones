@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, SelectMultipleField, HiddenField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Length
 from flask_wtf.file import FileField, FileAllowed
 
 from deeds.models import Tag
@@ -20,3 +20,8 @@ class PostForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(PostForm, self).__init__(*args, **kwargs)
         self.tags.choices = [(tag.id, tag.name) for tag in Tag.query.all()]
+
+
+class TagForm(FlaskForm):
+    name = StringField('Tag name', validators=[DataRequired(), Length(min=2, max=50)])
+    submit = SubmitField('Save Tag')

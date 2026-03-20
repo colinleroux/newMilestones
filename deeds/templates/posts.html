@@ -63,6 +63,9 @@
       <a href="{{ url_for('posts.new_post') }}" class="py-3 px-5 inline-flex items-center gap-x-1 text-sm font-medium rounded-full bg-teal-800 text-white hover:bg-teal-700 shadow-md">
         + Add Post
       </a>
+      <a href="{{ url_for('posts.manage_tags') }}" class="py-3 px-5 inline-flex items-center gap-x-1 text-sm font-medium rounded-full bg-white border border-teal-800 text-teal-700 hover:bg-teal-50 shadow-md">
+        Manage Tags
+      </a>
       <a href="{{ url_for('users.user_posts', username=current_user.username) }}" class="py-3 px-5 inline-flex items-center gap-x-1 text-sm font-medium rounded-full bg-orange-400 text-white hover:bg-orange-500 shadow-md">
         My Posts
       </a>

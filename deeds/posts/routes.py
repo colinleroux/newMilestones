@@ -3,7 +3,7 @@ from flask import (render_template, url_for, flash,
 from flask_login import current_user, login_required
 from deeds import db
 from deeds.models import Post, Tag
-from deeds.posts.forms import PostForm
+from deeds.posts.forms import PostForm, TagForm
 from deeds.posts.utils import save_post_image
 posts = Blueprint('posts', __name__)
 
@@ -91,5 +91,51 @@ def posts_page():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=6)
     return render_template('posts.html', posts=posts)
+
+
+@posts.route("/tags", methods=["GET", "POST"])
+@login_required
+def manage_tags():
+    form = TagForm()
+    edit_tag_id = request.args.get("edit", type=int)
+    editing_tag = None
+
+    if edit_tag_id is not None:
+        editing_tag = Tag.query.get_or_404(edit_tag_id)
+        if request.method == "GET":
+            form.name.data = editing_tag.name
+
+    if form.validate_on_submit():
+        normalized_name = form.name.data.strip()
+        existing_tag = Tag.query.filter(Tag.name.ilike(normalized_name)).first()
+
+        if existing_tag and (not editing_tag or existing_tag.id != editing_tag.id):
+            flash("A tag with that name already exists.", "warning")
+            return redirect(url_for("posts.manage_tags", edit=edit_tag_id) if editing_tag else url_for("posts.manage_tags"))
+
+        if editing_tag:
+            editing_tag.name = normalized_name
+            flash("Tag updated.", "success")
+        else:
+            db.session.add(Tag(name=normalized_name))
+            flash("Tag created.", "success")
+
+        db.session.commit()
+        return redirect(url_for("posts.manage_tags"))
+
+    tags = Tag.query.order_by(Tag.name.asc()).all()
+    return render_template("manage_tags.html", title="Manage Tags", form=form, tags=tags, editing_tag=editing_tag)
+
+
+@posts.route("/tags/<int:tag_id>/delete", methods=["POST"])
+@login_required
+def delete_tag(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    for post in list(tag.posts):
+        post.tags = [existing_tag for existing_tag in post.tags if existing_tag.id != tag.id]
+    db.session.delete(tag)
+    db.session.commit()
+    flash("Tag deleted.", "success")
+    return redirect(url_for("posts.manage_tags"))
 
 
