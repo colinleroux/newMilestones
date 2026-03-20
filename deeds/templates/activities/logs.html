@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<section class="mx-auto max-w-5xl space-y-6">
+<section class="mx-auto max-w-6xl space-y-6" x-data="{ showLogForm: {{ 'true' if editing_log or repeated_log or source_step else 'false' }} }">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Activities</p>
@@ -62,8 +62,22 @@
     </div>
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-    <div class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+  <div class="space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900">Saved logs</h2>
+        <p class="text-sm text-slate-600">Browse, filter, and manage the activities you have already recorded.</p>
+      </div>
+      <button
+        type="button"
+        class="rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600"
+        @click="showLogForm = !showLogForm"
+      >
+        <span x-text="showLogForm ? 'Hide log form' : 'Add a new log'"></span>
+      </button>
+    </div>
+
+    <div x-show="showLogForm" x-transition class="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
       <h2 class="text-xl font-semibold text-slate-900">
         {% if editing_log %}
           Edit log
@@ -91,15 +105,15 @@
             {% endfor %}
           </div>
 
-            <div>
-              {{ form.logged_on.label(class="mb-2 block text-sm font-medium text-slate-700") }}
-              {{ form.logged_on(class="w-full rounded-xl border border-orange-200 px-4 py-3 text-slate-800 focus:border-orange-400 focus:outline-none") }}
+          <div>
+            {{ form.logged_on.label(class="mb-2 block text-sm font-medium text-slate-700") }}
+            {{ form.logged_on(class="w-full rounded-xl border border-orange-200 px-4 py-3 text-slate-800 focus:border-orange-400 focus:outline-none") }}
             {% for error in form.logged_on.errors %}
               <p class="mt-1 text-sm text-red-600">{{ error }}</p>
             {% endfor %}
           </div>
 
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               {{ form.duration_minutes.label(class="mb-2 block text-sm font-medium text-slate-700") }}
               {{ form.duration_minutes(class="w-full rounded-xl border border-orange-200 px-4 py-3 text-slate-800 focus:border-orange-400 focus:outline-none") }}
@@ -129,7 +143,7 @@
 
           <div class="flex flex-wrap gap-2">
             {{ form.submit(class="rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600") }}
-            {% if editing_log %}
+            {% if editing_log or repeated_log or source_step %}
               <a href="{{ url_for('activities.activity_logs', view=view_mode, type_id=selected_type_id, start=start_date, end=end_date, period=period) }}" class="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                 Cancel
               </a>
@@ -145,7 +159,6 @@
 
     <div class="rounded-3xl border border-teal-100 bg-white p-6 shadow-sm">
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-xl font-semibold text-slate-900">Saved logs</h2>
         <div class="inline-flex rounded-full border border-teal-100 bg-teal-50 p-1 text-sm font-medium text-slate-700">
           <a href="{{ url_for('activities.activity_logs', type_id=selected_type_id, start=start_date, end=end_date, period=period, edit=editing_log.id if editing_log else None, repeat=repeated_log.id if repeated_log else None, view='cards') }}" class="rounded-full px-4 py-2 transition {{ 'bg-white text-slate-900 shadow-sm' if view_mode == 'cards' else 'text-slate-600 hover:text-slate-900' }}">
             Cards
