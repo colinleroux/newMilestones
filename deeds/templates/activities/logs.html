@@ -7,9 +7,16 @@
       <h1 class="mt-2 text-3xl font-bold text-slate-900">Activity Logs</h1>
       <p class="mt-2 max-w-2xl text-slate-600">Review what you have done, spot patterns over time, and keep your activity history easy to revisit and update.</p>
     </div>
-    <a href="{{ url_for('activities.index') }}" class="rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800 transition hover:bg-teal-100">
-      Back to Activities
-    </a>
+    <div class="flex flex-wrap gap-2">
+      {% if source_step %}
+        <a href="{{ url_for('goals.dashboard') }}" class="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100">
+          Back to Dashboard
+        </a>
+      {% endif %}
+      <a href="{{ url_for('activities.index') }}" class="rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800 transition hover:bg-teal-100">
+        Back to Activities
+      </a>
+    </div>
   </div>
 
   <div class="rounded-3xl border border-teal-100 bg-gradient-to-br from-teal-50 via-white to-orange-50 p-6 shadow-sm">
