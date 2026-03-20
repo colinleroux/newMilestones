@@ -29,13 +29,15 @@ def _active_activity_types():
 def _ensure_general_activity_type():
     activity_type = ActivityType.query.filter_by(
         user_id=current_user.id,
-        archived=False,
         name="General",
     ).first()
     if activity_type is None:
         activity_type = ActivityType(name="General", user_id=current_user.id)
         db.session.add(activity_type)
-        db.session.flush()
+        db.session.commit()
+    elif activity_type.archived:
+        activity_type.archived = False
+        db.session.commit()
     return activity_type
 
 
