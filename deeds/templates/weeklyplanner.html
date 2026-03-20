@@ -104,13 +104,49 @@
                   </div>
                   <button @click="removeStep(day.fullDate, step.id)" class="text-xs hover:underline">&times;</button>
                 </div>
+                <template x-if="step.log_activity">
+                  <div class="mt-2 flex flex-wrap gap-2 text-[11px] text-white/90">
+                    <span class="rounded-full border border-white/30 px-2 py-0.5">Tracked activity</span>
+                    <template x-if="step.duration_seconds">
+                      <span class="rounded-full border border-white/30 px-2 py-0.5" x-text="`${(step.duration_seconds / 60).toFixed(2).replace(/\.00$/, '')} min`"></span>
+                    </template>
+                    <template x-if="step.distance_m">
+                      <span class="rounded-full border border-white/30 px-2 py-0.5" x-text="`${(step.distance_m / 1000).toFixed(2).replace(/\.00$/, '')} km`"></span>
+                    </template>
+                    <template x-if="step.sets">
+                      <span class="rounded-full border border-white/30 px-2 py-0.5" x-text="`${step.sets} sets`"></span>
+                    </template>
+                    <template x-if="step.reps">
+                      <span class="rounded-full border border-white/30 px-2 py-0.5" x-text="`${step.reps} reps`"></span>
+                    </template>
+                  </div>
+                </template>
                 <div x-show="step.completed">
-                  <textarea
-                    x-model="step.reflection"
-                    @change="updateReflection(step)"
-                    placeholder="Reflection..."
-                    class="w-full mt-1 p-1 text-xs rounded"
-                  ></textarea>
+                  <div class="mt-2 space-y-2">
+                    <template x-if="step.log_activity && !step.logged_activity_id">
+                      <button
+                        type="button"
+                        class="rounded bg-white/20 px-2 py-1 text-xs font-medium text-white transition hover:bg-white/30"
+                        @click="openActivityLog(step)"
+                      >
+                        Add to log
+                      </button>
+                    </template>
+                    <template x-if="step.logged_activity_id">
+                      <a
+                        :href="`/activities/logs?edit=${step.logged_activity_id}`"
+                        class="inline-flex rounded bg-white/20 px-2 py-1 text-xs font-medium text-white transition hover:bg-white/30"
+                      >
+                        View logged activity
+                      </a>
+                    </template>
+                    <textarea
+                      x-model="step.reflection"
+                      @change="updateReflection(step)"
+                      placeholder="Reflection..."
+                      class="w-full p-1 text-xs rounded"
+                    ></textarea>
+                  </div>
                 </div>
               </li>
             </template>
@@ -120,10 +156,55 @@
             <div class="mt-2">
               <input
                 type="text"
-                x-model="newStep[day.fullDate]"
+                x-model="newStep[day.fullDate].title"
                 placeholder="Add step..."
                 class="text-sm w-full border rounded p-1 mb-2"
               />
+
+              <label class="mb-2 flex items-center gap-2 text-xs font-medium text-slate-700">
+                <input type="checkbox" x-model="newStep[day.fullDate].log_activity" class="h-4 w-4 rounded border-slate-300 text-green-600">
+                <span>Track as activity</span>
+              </label>
+
+              <div x-show="newStep[day.fullDate].log_activity" class="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div class="grid gap-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Activity type</label>
+                    <select x-model="newStep[day.fullDate].activity_type_id" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                      <option value="">General</option>
+                      <template x-for="activityType in activityTypes" :key="activityType.id">
+                        <option :value="activityType.id" x-text="activityType.name"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-slate-700">Duration (minutes)</label>
+                      <input type="number" min="0" step="0.01" x-model="newStep[day.fullDate].duration_minutes" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-slate-700">Distance (km)</label>
+                      <input type="number" min="0" step="0.01" x-model="newStep[day.fullDate].distance_km" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-slate-700">Weight (kg)</label>
+                      <input type="number" min="0" step="0.01" x-model="newStep[day.fullDate].weight_kg" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-slate-700">Sets</label>
+                      <input type="number" min="0" step="1" x-model="newStep[day.fullDate].sets" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-slate-700">Reps</label>
+                      <input type="number" min="0" step="1" x-model="newStep[day.fullDate].reps" class="w-full rounded border border-slate-300 px-2 py-1 text-xs">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700">Activity notes</label>
+                    <textarea x-model="newStep[day.fullDate].activity_notes" rows="2" class="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Optional notes to carry into the log later"></textarea>
+                  </div>
+                </div>
+              </div>
 
               <button
                 @click="addStep(day.fullDate)"
@@ -147,6 +228,7 @@ function plannerApp() {
     days: [],
     goals: [],
     completedGoals: [],
+    activityTypes: {{ activity_types | tojson }},
     initialGoalId: {{ selected_goal_id | tojson }},
     selectedGoalId: null,
     selectedGoal: null,
@@ -230,9 +312,23 @@ function plannerApp() {
       this.weeklyPlan = {};
       this.days.forEach(day => {
         this.weeklyPlan[day.fullDate] = [];
-        this.newStep[day.fullDate] = '';
+        this.newStep[day.fullDate] = this.blankStepDraft();
         this.repeatAllDays[day.fullDate] = false;
       });
+    },
+
+    blankStepDraft() {
+      return {
+        title: '',
+        log_activity: false,
+        activity_type_id: '',
+        duration_minutes: '',
+        distance_km: '',
+        weight_kg: '',
+        sets: '',
+        reps: '',
+        activity_notes: ''
+      };
     },
 
     populateWeeklyPlan(steps) {
@@ -324,7 +420,8 @@ function plannerApp() {
 
     async addStep(dayKey) {
       if (!this.selectedGoal) return;
-      const text = this.newStep[dayKey]?.trim();
+      const draft = this.newStep[dayKey] || this.blankStepDraft();
+      const text = draft.title?.trim();
       const repeat = this.repeatAllDays[dayKey];
 
       if (!text) return;
@@ -335,7 +432,15 @@ function plannerApp() {
           completed: false,
           description: '',
           reflection: '',
-          date_for: dateKey
+          date_for: dateKey,
+          log_activity: draft.log_activity,
+          activity_type_id: draft.activity_type_id,
+          duration_minutes: draft.duration_minutes,
+          distance_km: draft.distance_km,
+          weight_kg: draft.weight_kg,
+          sets: draft.sets,
+          reps: draft.reps,
+          activity_notes: draft.activity_notes
         };
         const res = await fetch(`/api/goals/${this.selectedGoal.id}/steps`, {
           method: 'POST',
@@ -355,7 +460,7 @@ function plannerApp() {
         for (const d of this.days) await addToDay(d.fullDate);
       }
 
-      this.newStep[dayKey] = '';
+      this.newStep[dayKey] = this.blankStepDraft();
       this.repeatAllDays[dayKey] = false;
     },
 
@@ -395,6 +500,10 @@ function plannerApp() {
         },
         body: JSON.stringify({ reflection: step.reflection, title: step.title, completed: step.completed })
       });
+    },
+
+    openActivityLog(step) {
+      window.location.href = `/activities/logs?step_id=${step.id}`;
     },
 
     startDrag(dayKey, index) {
