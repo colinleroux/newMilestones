@@ -3,7 +3,7 @@ from flask import (render_template, url_for, flash,
                    redirect, request, abort, jsonify, Blueprint, current_app)
 from flask_login import current_user, login_required
 from deeds import db
-from deeds.models import Goal, Step
+from deeds.models import ActivityLog, ActivityType, Goal, Step
 from .utils import compute_goal_progress
 
 goals = Blueprint('goals', __name__)
@@ -20,6 +20,39 @@ def serialize_goal(goal):
         "progress": compute_goal_progress(goal),
         "completed": goal.completed,
     }
+
+
+def _coerce_activity_type_id(raw_activity_type_id):
+    if raw_activity_type_id in (None, "", 0, "0"):
+        return None
+
+    activity_type = ActivityType.query.filter_by(
+        id=int(raw_activity_type_id),
+        user_id=current_user.id,
+    ).first()
+    if activity_type:
+        return activity_type.id
+
+    return None
+
+
+def _apply_step_activity_fields(step, data):
+    log_activity = data.get("log_activity", step.log_activity)
+    step.log_activity = bool(log_activity)
+    step.activity_type_id = _coerce_activity_type_id(data.get("activity_type_id")) if step.log_activity else None
+    step.duration_seconds = int(float(data["duration_minutes"]) * 60) if data.get("duration_minutes") not in (None, "") else None
+    step.distance_m = float(data["distance_km"]) * 1000 if data.get("distance_km") not in (None, "") else None
+    step.weight_kg = float(data["weight_kg"]) if data.get("weight_kg") not in (None, "") else None
+    step.sets = int(data["sets"]) if data.get("sets") not in (None, "") else None
+    step.reps = int(data["reps"]) if data.get("reps") not in (None, "") else None
+    step.activity_notes = data.get("activity_notes", step.activity_notes)
+    if not step.log_activity:
+        step.duration_seconds = None
+        step.distance_m = None
+        step.weight_kg = None
+        step.sets = None
+        step.reps = None
+        step.activity_notes = None
 
 
 @goals.route("/dashboard")
@@ -197,6 +230,7 @@ def api_get_goals_with_steps():
                     "completed_at": step.completed_at.isoformat() if step.completed_at else None,
                     "date_for": step.date_for.isoformat() if step.date_for else None,
                     "reflection": step.reflection,
+                    "logged_activity_id": ActivityLog.query.filter_by(step_id=step.id).order_by(ActivityLog.logged_at.desc()).first().id if ActivityLog.query.filter_by(step_id=step.id).first() else None,
                 }
                 for step in sorted(
                     [step for step in g.steps if step.completed],
@@ -236,6 +270,7 @@ def get_steps_for_goal(goal_id):
             reflection=data.get("reflection", ""),
             date_for=date_for
         )
+        _apply_step_activity_fields(step, data)
         db.session.add(step)
         db.session.commit()
         return jsonify(step.to_dict()), 201
@@ -285,6 +320,7 @@ def update_step(step_id):
     step.reflection = data.get("reflection", step.reflection)
     if "date_for" in data:
         step.date_for = datetime.datetime.strptime(data["date_for"], "%Y-%m-%d").date()
+    _apply_step_activity_fields(step, data)
 
     db.session.commit()
     return jsonify(step.to_dict())
@@ -297,6 +333,7 @@ def delete_step(step_id):
     if step.goal.user_id != current_user.id:
         return jsonify({"error": "Unauthorized"}), 403
 
+    ActivityLog.query.filter_by(step_id=step.id).update({"step_id": None})
     db.session.delete(step)
     db.session.commit()
     return jsonify({"message": "Step deleted"})

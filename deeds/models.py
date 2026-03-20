@@ -85,8 +85,17 @@ class Step(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     goal_id = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable=False)
     percentage = db.Column(db.Float, nullable=True)
+    log_activity = db.Column(db.Boolean, default=False)
+    activity_type_id = db.Column(db.Integer, db.ForeignKey('activity_type.id'), nullable=True)
+    duration_seconds = db.Column(db.Integer, nullable=True)
+    distance_m = db.Column(db.Float, nullable=True)
+    weight_kg = db.Column(db.Float, nullable=True)
+    sets = db.Column(db.Integer, nullable=True)
+    reps = db.Column(db.Integer, nullable=True)
+    activity_notes = db.Column(db.Text, nullable=True)
 
     def to_dict(self):
+        linked_log = ActivityLog.query.filter_by(step_id=self.id).order_by(ActivityLog.logged_at.desc()).first()
         return {
             'id': self.id,
             'title': self.title,
@@ -101,6 +110,15 @@ class Step(db.Model):
             'goal_id': self.goal_id,
             'goal_name': self.goal.name if self.goal else None,
             'goal_color': self.goal.color if self.goal else "#ccc",
+            'log_activity': self.log_activity,
+            'activity_type_id': self.activity_type_id,
+            'duration_seconds': self.duration_seconds,
+            'distance_m': self.distance_m,
+            'weight_kg': self.weight_kg,
+            'sets': self.sets,
+            'reps': self.reps,
+            'activity_notes': self.activity_notes,
+            'logged_activity_id': linked_log.id if linked_log else None,
         }
 
     def __repr__(self):
