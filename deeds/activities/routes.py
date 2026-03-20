@@ -18,22 +18,22 @@ from deeds.activities.utils import (
 activities = Blueprint("activities", __name__, url_prefix="/activities")
 
 ACTIVITY_COLORS = [
-    "#0f766e",
-    "#0369a1",
-    "#7c3aed",
-    "#db2777",
-    "#ea580c",
-    "#ca8a04",
-    "#65a30d",
+    "#1d4ed8",
     "#dc2626",
-    "#2563eb",
     "#16a34a",
     "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
-    "#f97316",
+    "#7c3aed",
+    "#db2777",
+    "#0891b2",
+    "#ea580c",
+    "#65a30d",
+    "#4f46e5",
+    "#be123c",
+    "#0f766e",
+    "#a16207",
+    "#c026d3",
+    "#0ea5e9",
+    "#1f2937",
 ]
 
 

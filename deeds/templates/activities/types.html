@@ -29,19 +29,15 @@
           <input type="hidden" name="{{ form.color.name }}" :value="selectedColor">
           <div class="flex flex-wrap gap-3">
             {% for color in activity_colors %}
-              {% set is_used = color in used_colors %}
-              <button
-                type="button"
-                class="relative h-10 w-10 rounded-full border-4 shadow transition"
+              <div
+                class="h-10 w-10 rounded-full cursor-pointer border-4 shadow transition"
                 :class="selectedColor === '{{ color }}' ? 'scale-110 border-slate-900' : 'border-transparent'"
                 style="background-color: {{ color }};"
-                title="{% if is_used and form.color.data != color %}Already in use{% else %}Select color{% endif %}"
-                {% if is_used and form.color.data != color %}disabled{% endif %}
                 @click="selectedColor = '{{ color }}'"
-              ></button>
+              ></div>
             {% endfor %}
           </div>
-          <p class="mt-2 text-xs text-slate-500">Used colors are dimmed so each activity can keep its own identity.</p>
+          <p class="mt-2 text-xs text-slate-500">Pick the color that feels right for this activity.</p>
           {% for error in form.color.errors %}
             <p class="mt-1 text-sm text-red-600">{{ error }}</p>
           {% endfor %}
