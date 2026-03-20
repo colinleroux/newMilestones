@@ -37,15 +37,29 @@ def _coerce_activity_type_id(raw_activity_type_id):
 
 
 def _apply_step_activity_fields(step, data):
-    log_activity = data.get("log_activity", step.log_activity)
-    step.log_activity = bool(log_activity)
-    step.activity_type_id = _coerce_activity_type_id(data.get("activity_type_id")) if step.log_activity else None
-    step.duration_seconds = int(float(data["duration_minutes"]) * 60) if data.get("duration_minutes") not in (None, "") else None
-    step.distance_m = float(data["distance_km"]) * 1000 if data.get("distance_km") not in (None, "") else None
-    step.weight_kg = float(data["weight_kg"]) if data.get("weight_kg") not in (None, "") else None
-    step.sets = int(data["sets"]) if data.get("sets") not in (None, "") else None
-    step.reps = int(data["reps"]) if data.get("reps") not in (None, "") else None
-    step.activity_notes = data.get("activity_notes", step.activity_notes)
+    if "log_activity" in data:
+        step.log_activity = bool(data.get("log_activity"))
+
+    if "activity_type_id" in data:
+        step.activity_type_id = _coerce_activity_type_id(data.get("activity_type_id")) if step.log_activity else None
+
+    if "duration_minutes" in data:
+        step.duration_seconds = int(float(data["duration_minutes"]) * 60) if data.get("duration_minutes") not in (None, "") else None
+
+    if "distance_km" in data:
+        step.distance_m = float(data["distance_km"]) * 1000 if data.get("distance_km") not in (None, "") else None
+
+    if "weight_kg" in data:
+        step.weight_kg = float(data["weight_kg"]) if data.get("weight_kg") not in (None, "") else None
+
+    if "sets" in data:
+        step.sets = int(data["sets"]) if data.get("sets") not in (None, "") else None
+
+    if "reps" in data:
+        step.reps = int(data["reps"]) if data.get("reps") not in (None, "") else None
+
+    if "activity_notes" in data:
+        step.activity_notes = data.get("activity_notes")
     if isinstance(step.activity_notes, str):
         step.activity_notes = step.activity_notes.strip() or None
     if not step.log_activity:
