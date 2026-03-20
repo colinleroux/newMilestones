@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+<div x-data="{ showGettingStarted: false }" class="space-y-6">
 <section class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-50 via-white to-teal-50 px-6 py-12 shadow-sm sm:px-10 lg:px-12 lg:py-16">
   <div class="absolute -left-24 top-10 h-56 w-56 rounded-full bg-orange-200/40 blur-3xl"></div>
   <div class="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-teal-200/40 blur-3xl"></div>
@@ -24,6 +25,13 @@
            class="inline-flex items-center rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600">
           Start with a goal
         </a>
+        <button
+          type="button"
+          class="inline-flex items-center rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-200 transition hover:bg-teal-800"
+          @click="showGettingStarted = true"
+        >
+          Getting started
+        </button>
         <a href="{{ url_for('main.about') }}"
            class="inline-flex items-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
           See how it works
@@ -56,4 +64,52 @@
     </div>
   </div>
 </section>
+
+<div
+  x-cloak
+  x-show="showGettingStarted"
+  x-transition.opacity
+  class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 px-4 py-6"
+>
+  <div @click.outside="showGettingStarted = false" class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Getting Started</p>
+        <h2 class="mt-2 text-2xl font-bold text-slate-900">A quick guide to using deeds</h2>
+        <p class="mt-2 max-w-2xl text-sm text-slate-600">This guide is here to make the first few steps feel obvious, while also showing you the extra features you can use when you want them.</p>
+      </div>
+      <button type="button" class="rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" @click="showGettingStarted = false">
+        Close
+      </button>
+    </div>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="rounded-2xl border border-teal-100 bg-teal-50/50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">1. Start where you are</h3>
+        <p class="mt-2 text-sm text-slate-600">If you are not ready to commit, use contemplated items on the dashboard as a holding space. If you already know what matters, create a goal straight away.</p>
+      </div>
+      <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">2. Break goals down</h3>
+        <p class="mt-2 text-sm text-slate-600">Add steps in the step planner and make them small enough to feel clear and achievable. You can schedule them for past, current, or future days.</p>
+      </div>
+      <div class="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">3. Complete and reflect</h3>
+        <p class="mt-2 text-sm text-slate-600">When a step is done, mark it complete. You can add a reflection straight away, or later if you want to capture how it felt and what you learned.</p>
+      </div>
+      <div class="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">4. Logging is optional</h3>
+        <p class="mt-2 text-sm text-slate-600">Some steps can also be tracked as activities with time, distance, sets, reps, and notes. If you did not set this up at first, you can still keep using simple steps without logging.</p>
+      </div>
+      <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">5. Archive and revive goals</h3>
+        <p class="mt-2 text-sm text-slate-600">When all steps are done, archive the goal as achieved. If you later want to add more steps, mark it as not achieved again and continue.</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-base font-semibold text-slate-900">6. Use the app your way</h3>
+        <p class="mt-2 text-sm text-slate-600">You can focus only on goals and steps, only on activities, or use both together. deeds is meant to support momentum, not force one rigid workflow.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
 {% endblock %}

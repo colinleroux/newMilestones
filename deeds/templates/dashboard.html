@@ -149,6 +149,7 @@
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
             <button class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded" @click="showCurrentMonth">This Month</button>
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(1)">Next</button>
+            <button class="px-3 py-1.5 text-sm bg-violet-600 text-white rounded" @click="showGettingStarted = true">Getting Started</button>
           </div>
 
           <div class="flex flex-wrap gap-2 lg:justify-end">
@@ -164,6 +165,53 @@
             >
               Step Manager
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        x-cloak
+        x-show="showGettingStarted"
+        x-transition.opacity
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 px-4 py-6"
+      >
+        <div @click.outside="showGettingStarted = false" class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Getting Started</p>
+              <h2 class="mt-2 text-2xl font-bold text-slate-900">How to get the most from deeds</h2>
+              <p class="mt-2 max-w-2xl text-sm text-slate-600">A quick guide to the main flow of the app, plus a few useful details that are easy to miss when you are new.</p>
+            </div>
+            <button type="button" class="rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" @click="showGettingStarted = false">
+              Close
+            </button>
+          </div>
+
+          <div class="mt-6 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-teal-100 bg-teal-50/50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">1. Start with a goal or an idea</h3>
+              <p class="mt-2 text-sm text-slate-600">Use contemplated items when something is still forming. Convert the strongest ideas into goals once you are ready to commit.</p>
+            </div>
+            <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">2. Break goals into steps</h3>
+              <p class="mt-2 text-sm text-slate-600">Use the step planner to turn a goal into small actions. Keep steps simple unless you want to track them as activities too.</p>
+            </div>
+            <div class="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">3. Complete steps on the dashboard</h3>
+              <p class="mt-2 text-sm text-slate-600">The dashboard shows your current work by day. Completed steps can include reflections, and tracked steps can also be added to your activity log.</p>
+            </div>
+            <div class="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">4. Logging is optional</h3>
+              <p class="mt-2 text-sm text-slate-600">Activities can be logged on their own, or created from completed tracked steps. If you did not set that up at first, simple steps still work perfectly well.</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">5. Completed goals can be revived</h3>
+              <p class="mt-2 text-sm text-slate-600">Archived goals move to completed goals. If you later want to add more steps, mark the goal as not achieved and continue from there.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <h3 class="text-base font-semibold text-slate-900">6. Use the parts that help</h3>
+              <p class="mt-2 text-sm text-slate-600">You can use deeds as a planner, an activity tracker, or both together. The best setup is the one that helps you keep moving.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -389,6 +437,7 @@
 <script>
 function dashboard() {
   return {
+    showGettingStarted: false,
     days: [],
     weeklyPlan: {},
     loading: true,
