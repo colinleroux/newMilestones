@@ -4,9 +4,9 @@
   <div class="grid lg:grid-cols-4 gap-4">
     <div class="lg:col-span-1">
       <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 class="text-xl font-semibold" x-text="showCompletedGoals ? 'Completed goals' : 'Current goals'"></h3>
+        <h3 class="text-xl font-semibold" x-text="sidebarTitle"></h3>
         <div class="flex flex-wrap items-center gap-2">
-          <template x-if="selectedGoalId !== null">
+          <template x-if="selectedGoalId !== null && !showIdeas">
             <button
               class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
               @click="clearGoalFilter"
@@ -14,7 +14,30 @@
               All goals
             </button>
           </template>
-          <template x-if="!showCompletedGoals">
+          <template x-if="!showIdeas && !showCompletedGoals">
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-violet-300 bg-violet-50 text-violet-700 transition hover:bg-violet-100"
+              @click="toggleIdeas"
+              title="Show contemplated items"
+              aria-label="Show contemplated items"
+            >
+              <span class="text-lg">🧠</span>
+            </button>
+          </template>
+          <template x-if="showIdeas">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              @click="toggleIdeas"
+              title="Back to current goals"
+              aria-label="Back to current goals"
+            >
+              <span aria-hidden="true">←</span>
+              <span>Goals</span>
+            </button>
+          </template>
+          <template x-if="!showIdeas && !showCompletedGoals">
             <button
               type="button"
               class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-700 transition hover:bg-amber-100"
@@ -25,7 +48,7 @@
               <span class="text-lg">🏆</span>
             </button>
           </template>
-          <template x-if="showCompletedGoals">
+          <template x-if="!showIdeas && showCompletedGoals">
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
@@ -41,7 +64,7 @@
       </div>
       <p class="mb-4 text-sm italic text-gray-600" x-text="sidebarHint"></p>
 
-      <div class="space-y-3">
+      <div class="space-y-3" x-show="!showIdeas">
         <template x-if="visibleGoals.length === 0">
           <div class="p-3 bg-gray-100 text-gray-700 rounded text-sm">
             <span x-text="showCompletedGoals ? `You haven't completed any goals yet.` : `You haven't created any goals yet.`"></span>
@@ -92,9 +115,32 @@
           </div>
         </template>
       </div>
+
+      <div class="space-y-3" x-show="showIdeas">
+        <template x-if="ideas.length === 0">
+          <div class="rounded-xl bg-violet-50 p-4 text-sm text-violet-800">
+            No contemplated items yet. Add a few things you do not want to forget before turning them into goals.
+          </div>
+        </template>
+
+        <template x-for="idea in ideas" :key="idea.id">
+          <div
+            class="rounded-xl border border-violet-100 bg-white p-4 shadow cursor-pointer hover:bg-violet-50/50"
+            :class="selectedIdea?.id === idea.id ? 'ring-2 ring-offset-1 ring-violet-400' : ''"
+            @click="selectIdea(idea)"
+          >
+            <div class="font-medium text-slate-900" x-text="idea.title"></div>
+            <template x-if="idea.notes">
+              <p class="mt-2 text-sm text-slate-600 line-clamp-3" x-text="idea.notes"></p>
+            </template>
+          </div>
+        </template>
+      </div>
     </div>
 
     <div class="lg:col-span-3">
+      <template x-if="!showIdeas">
+      <div>
       <div class="mb-3 p-3 rounded-lg shadow border border-gray-200">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div class="flex flex-wrap gap-2">
@@ -274,6 +320,67 @@
           </div>
         </template>
       </div>
+      </div>
+      </template>
+
+      <template x-if="showIdeas">
+        <div class="rounded-2xl border border-violet-100 bg-white p-6 shadow-sm">
+          <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-900">Contemplated items</h2>
+              <p class="mt-2 text-sm text-slate-600">Capture ideas, intentions, and possible next priorities before you commit them to goals and steps.</p>
+            </div>
+            <button
+              type="button"
+              class="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+              @click="startAddIdea"
+            >
+              Add item
+            </button>
+          </div>
+
+          <template x-if="addingIdea || editingIdea">
+            <div class="rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+              <div class="space-y-4">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Title</label>
+                  <input type="text" x-model="ideaForm.title" class="w-full rounded-xl border border-violet-200 px-4 py-3 text-slate-800 focus:border-violet-400 focus:outline-none" placeholder="What are you considering?">
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Notes</label>
+                  <textarea x-model="ideaForm.notes" rows="4" class="w-full rounded-xl border border-violet-200 px-4 py-3 text-slate-800 focus:border-violet-400 focus:outline-none" placeholder="Any context, priorities, or reasons this matters?"></textarea>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700" @click="saveIdea">Save item</button>
+                  <button type="button" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" @click="resetIdeaForm">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="selectedIdea && !addingIdea && !editingIdea">
+            <div class="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 class="text-xl font-semibold text-slate-900" x-text="selectedIdea.title"></h3>
+                  <p class="mt-1 text-xs uppercase tracking-wide text-violet-700">Contemplated item</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600" @click="editIdea(selectedIdea)">Edit</button>
+                  <button type="button" class="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600" @click="deleteIdea(selectedIdea)">Delete</button>
+                </div>
+              </div>
+              <p class="whitespace-pre-line text-slate-700" x-text="selectedIdea.notes || 'No notes added yet.'"></p>
+            </div>
+          </template>
+
+          <template x-if="!selectedIdea && !addingIdea && !editingIdea">
+            <div class="rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 p-8 text-center text-sm text-slate-600">
+              Select an item from the list, or add a new one to capture something you are still thinking through.
+            </div>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
 </div>
@@ -292,10 +399,17 @@ function dashboard() {
     goals: {{ goals | tojson }},
     completedGoals: {{ completed_goals | tojson }},
     showCompletedGoals: false,
+    showIdeas: false,
+    ideas: [],
+    selectedIdea: null,
+    addingIdea: false,
+    editingIdea: false,
+    ideaForm: { id: null, title: '', notes: '' },
 
     init() {
       this.generateDays();
       this.fetchSteps();
+      this.fetchIdeas();
     },
 
     toLocalDateString(date) {
@@ -352,13 +466,115 @@ function dashboard() {
 
     selectGoal(goal) {
       this.selectedGoalId = goal.id;
+      this.showIdeas = false;
       this.fetchSteps();
     },
 
     toggleCompletedGoals() {
       this.showCompletedGoals = !this.showCompletedGoals;
+      this.showIdeas = false;
       this.selectedGoalId = null;
       this.fetchSteps();
+    },
+
+    toggleIdeas() {
+      this.showIdeas = !this.showIdeas;
+      this.showCompletedGoals = false;
+      this.selectedGoalId = null;
+      if (this.showIdeas) {
+        this.fetchIdeas();
+      }
+    },
+
+    async fetchIdeas() {
+      try {
+        const res = await fetch('/api/ideas');
+        const data = await res.json();
+        this.ideas = data.ideas || [];
+        if (this.selectedIdea) {
+          this.selectedIdea = this.ideas.find(idea => idea.id === this.selectedIdea.id) || null;
+        }
+      } catch (err) {
+        console.error('Failed to fetch ideas:', err);
+      }
+    },
+
+    selectIdea(idea) {
+      this.selectedIdea = idea;
+      this.addingIdea = false;
+      this.editingIdea = false;
+      this.ideaForm = { id: null, title: '', notes: '' };
+    },
+
+    startAddIdea() {
+      this.selectedIdea = null;
+      this.addingIdea = true;
+      this.editingIdea = false;
+      this.ideaForm = { id: null, title: '', notes: '' };
+    },
+
+    editIdea(idea) {
+      this.selectedIdea = idea;
+      this.addingIdea = false;
+      this.editingIdea = true;
+      this.ideaForm = { id: idea.id, title: idea.title, notes: idea.notes || '' };
+    },
+
+    resetIdeaForm() {
+      this.ideaForm = { id: null, title: '', notes: '' };
+      this.addingIdea = false;
+      this.editingIdea = false;
+    },
+
+    async saveIdea() {
+      const payload = {
+        title: (this.ideaForm.title || '').trim(),
+        notes: this.ideaForm.notes || ''
+      };
+      if (!payload.title) return;
+
+      const url = this.editingIdea ? `/api/ideas/${this.ideaForm.id}` : '/api/ideas';
+      const method = this.editingIdea ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Failed to save idea');
+        const saved = await res.json();
+        await this.fetchIdeas();
+        this.selectedIdea = this.ideas.find(idea => idea.id === saved.id) || saved;
+        this.resetIdeaForm();
+      } catch (err) {
+        console.error(err);
+        alert('Could not save contemplated item.');
+      }
+    },
+
+    async deleteIdea(idea) {
+      if (!confirm('Delete this contemplated item?')) return;
+      try {
+        const res = await fetch(`/api/ideas/${idea.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        if (!res.ok) throw new Error('Failed to delete idea');
+        await this.fetchIdeas();
+        if (this.selectedIdea?.id === idea.id) {
+          this.selectedIdea = null;
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Could not delete contemplated item.');
+      }
     },
 
     async markGoalCompleted(goal) {
@@ -565,7 +781,17 @@ function dashboard() {
       return this.showCompletedGoals ? this.completedGoals : this.goals;
     },
 
+    get sidebarTitle() {
+      if (this.showIdeas) {
+        return 'Contemplated items';
+      }
+      return this.showCompletedGoals ? 'Completed goals' : 'Current goals';
+    },
+
     get sidebarHint() {
+      if (this.showIdeas) {
+        return 'Capture and revisit ideas before turning them into goals.';
+      }
       if (this.selectedGoalId !== null) {
         return 'Showing steps for the selected goal.';
       }

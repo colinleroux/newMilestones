@@ -3,7 +3,7 @@ from flask import (render_template, url_for, flash,
                    redirect, request, abort, jsonify, Blueprint, current_app)
 from flask_login import current_user, login_required
 from deeds import db
-from deeds.models import ActivityLog, ActivityType, Goal, Step
+from deeds.models import ActivityLog, ActivityType, Goal, Idea, Step
 from .utils import compute_goal_progress
 
 goals = Blueprint('goals', __name__)
@@ -392,3 +392,56 @@ def get_steps_in_range():
 
     steps = query.all()
     return jsonify({'steps': [step.to_dict() for step in steps]})
+
+
+@goals.route("/api/ideas", methods=["GET", "POST"])
+@login_required
+def ideas_collection():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Title is required"}), 400
+
+        idea = Idea(
+            title=title,
+            notes=(data.get("notes") or "").strip() or None,
+            user_id=current_user.id,
+        )
+        db.session.add(idea)
+        db.session.commit()
+        return jsonify(idea.to_dict()), 201
+
+    ideas = (
+        Idea.query.filter_by(user_id=current_user.id)
+        .order_by(Idea.created_at.desc())
+        .all()
+    )
+    return jsonify({"ideas": [idea.to_dict() for idea in ideas]})
+
+
+@goals.route("/api/ideas/<int:idea_id>", methods=["PUT", "PATCH", "DELETE"])
+@login_required
+def idea_detail(idea_id):
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    if request.method == "DELETE":
+        db.session.delete(idea)
+        db.session.commit()
+        return jsonify({"message": "Idea deleted"})
+
+    data = request.get_json() or {}
+    title = data.get("title")
+    if title is not None:
+        title = title.strip()
+        if not title:
+            return jsonify({"error": "Title is required"}), 400
+        idea.title = title
+
+    if "notes" in data:
+        idea.notes = (data.get("notes") or "").strip() or None
+
+    db.session.commit()
+    return jsonify(idea.to_dict())
