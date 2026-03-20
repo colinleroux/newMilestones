@@ -149,7 +149,7 @@
             <button class="px-3 py-1.5 text-sm bg-green-500 text-white rounded" @click="changeWeek(0)">This Week</button>
             <button class="px-3 py-1.5 text-sm bg-amber-500 text-white rounded" @click="showCurrentMonth">This Month</button>
             <button class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded" @click="changePeriod(1)">Next</button>
-            <button class="px-3 py-1.5 text-sm bg-violet-600 text-white rounded" @click="showGettingStarted = true">Getting Started</button>
+            <button class="px-3 py-1.5 text-sm bg-violet-600 text-white rounded" @click="showGettingStarted = true">Help</button>
           </div>
 
           <div class="flex flex-wrap gap-2 lg:justify-end">
@@ -178,9 +178,9 @@
         <div @click.outside="showGettingStarted = false" class="w-full max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Getting Started</p>
-              <h2 class="mt-2 text-2xl font-bold text-slate-900">How to get the most from deeds</h2>
-              <p class="mt-2 max-w-2xl text-sm text-slate-600">A quick guide to the main flow of the app, plus a few useful details that are easy to miss when you are new.</p>
+              <p class="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Quick Guide</p>
+              <h2 class="mt-2 text-2xl font-bold text-slate-900">A simple workflow for using deeds</h2>
+              <p class="mt-2 max-w-2xl text-sm text-slate-600">Use this as a gentle path through the app: capture ideas, turn them into goals, work through steps, and keep records only when they help you.</p>
             </div>
             <button type="button" class="rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" @click="showGettingStarted = false">
               Close
@@ -189,28 +189,28 @@
 
           <div class="mt-6 grid gap-4 md:grid-cols-2">
             <div class="rounded-2xl border border-teal-100 bg-teal-50/50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">1. Start with a goal or an idea</h3>
-              <p class="mt-2 text-sm text-slate-600">Use contemplated items when something is still forming. Convert the strongest ideas into goals once you are ready to commit.</p>
+              <h3 class="text-base font-semibold text-slate-900">1. Start with a contemplated item</h3>
+              <p class="mt-2 text-sm text-slate-600">Use the brain button when something is still forming. Add ideas, possibilities, or priorities there first so nothing important gets forgotten.</p>
             </div>
             <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">2. Break goals into steps</h3>
-              <p class="mt-2 text-sm text-slate-600">Use the step planner to turn a goal into small actions. Keep steps simple unless you want to track them as activities too.</p>
+              <h3 class="text-base font-semibold text-slate-900">2. Promote the right idea into a goal</h3>
+              <p class="mt-2 text-sm text-slate-600">Once something feels ready, convert it into a goal or create a fresh goal directly. Goals are for the things you want to actively move forward.</p>
             </div>
             <div class="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">3. Complete steps on the dashboard</h3>
-              <p class="mt-2 text-sm text-slate-600">The dashboard shows your current work by day. Completed steps can include reflections, and tracked steps can also be added to your activity log.</p>
+              <h3 class="text-base font-semibold text-slate-900">3. Add steps that feel achievable</h3>
+              <p class="mt-2 text-sm text-slate-600">Break the goal into small steps in the step planner. Keep them light and practical so they feel doable rather than daunting.</p>
             </div>
             <div class="rounded-2xl border border-sky-100 bg-sky-50/50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">4. Logging is optional</h3>
-              <p class="mt-2 text-sm text-slate-600">Activities can be logged on their own, or created from completed tracked steps. If you did not set that up at first, simple steps still work perfectly well.</p>
+              <h3 class="text-base font-semibold text-slate-900">4. Check in daily and tick things off</h3>
+              <p class="mt-2 text-sm text-slate-600">Use the dashboard to see what is scheduled for today, this week, or this month. Mark steps complete as you go and add more when life changes.</p>
             </div>
             <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">5. Completed goals can be revived</h3>
-              <p class="mt-2 text-sm text-slate-600">Archived goals move to completed goals. If you later want to add more steps, mark the goal as not achieved and continue from there.</p>
+              <h3 class="text-base font-semibold text-slate-900">5. Keep records if you want them</h3>
+              <p class="mt-2 text-sm text-slate-600">Reflections and logs are optional. Use reflections to capture how a step felt, and logs when you want activity details like time, distance, sets, reps, or notes.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <h3 class="text-base font-semibold text-slate-900">6. Use the parts that help</h3>
-              <p class="mt-2 text-sm text-slate-600">You can use deeds as a planner, an activity tracker, or both together. The best setup is the one that helps you keep moving.</p>
+              <h3 class="text-base font-semibold text-slate-900">6. Revive or reshape goals when needed</h3>
+              <p class="mt-2 text-sm text-slate-600">Completed goals move into the achieved list. If you want to add more steps later, simply mark the goal as not achieved and carry on.</p>
             </div>
           </div>
         </div>
